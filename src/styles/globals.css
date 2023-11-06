@@ -54,3 +54,19 @@ body {
 .Toastify__toast > button > svg {
   display: none;
 }
+
+input[type="number"] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}

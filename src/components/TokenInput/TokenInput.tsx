@@ -39,6 +39,7 @@ const TokenInput = (props: TokenInputProps) => {
       <div className="flex flex-col gap-1 flex-1 ">
         <label>Amount</label>
         <input
+          type="number"
           value={amount}
           onChange={onAmountChange}
           className="bg-transparent text-4xl w-full outline-none"
