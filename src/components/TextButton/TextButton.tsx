@@ -10,13 +10,6 @@ interface TextButtonProps
 
 const TextButton = (props: TextButtonProps) => {
   const { className, children, ...rest } = props
-  // const colors = {
-  //   green: "text-[#17BD8D]",
-  //   red: "text-[#E6007E]",
-  //   orange: "text-[#FFA114]",
-  //   blue: "text-[#219FFF]",
-  //   gray: "text-[rgba(96, 98, 108, 1)]",
-  // }
   return (
     <button
       {...rest}

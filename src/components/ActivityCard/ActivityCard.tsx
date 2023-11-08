@@ -1,31 +1,28 @@
 import React, { useEffect, useState } from "react"
 import TransactionsList from "./TransactionsList/TransactionsList"
 import TransactionDetails from "./TransactionDetails/TransactionDetails"
-import { PendingSend } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
-import { RecentSend } from "@/contexts/ActivityProvider/RecentSendsProvider/RecentSendsProvider"
 import { useAccount } from "wagmi"
 import Image from "next/image"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
+import { SendData } from "@/contexts/ActivityProvider/ActivityProvider"
 
 export const ActivityCard = () => {
   const [cardState, setCardState] = useState<
     "transactions" | "transaction-details"
   >("transactions")
 
-  const [selectedSendTx, setSelectedSendTx] = useState<
-    PendingSend | RecentSend
-  >()
+  const [selectedSendTxHash, setSelectedSendTxHash] = useState<string>()
 
   const { isConnected } = useAccount()
   const { chain } = useAppChain()
 
-  //Whenever chain changes, switch to transaction list
+  //Whenever chain changes, switch to list view
   useEffect(() => {
     setCardState("transactions")
   }, [chain.id])
 
-  const onTransactionClick = (tx: PendingSend | RecentSend) => {
-    setSelectedSendTx(tx)
+  const onTransactionClick = (txHash: string) => {
+    setSelectedSendTxHash(txHash)
     setCardState("transaction-details")
   }
 
@@ -48,7 +45,7 @@ export const ActivityCard = () => {
         <TransactionsList onTransactionClick={onTransactionClick} />
       ) : (
         <TransactionDetails
-          selectedSendTx={selectedSendTx}
+          selectedSendTxHash={selectedSendTxHash}
           onBack={() => setCardState("transactions")}
         />
       )}

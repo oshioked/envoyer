@@ -3,7 +3,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState,
   createContext,
 } from "react"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
@@ -22,33 +21,37 @@ interface Erc20TokensContextProps {
 export const Erc20TokensContext = createContext<Erc20TokensContextProps>({})
 
 export const ERC20TokensProvider = (props: { children: ReactNode }) => {
-  const [allChainsTokens, setAllChainsTokens] = useLocalStorageState<{
-    [chainId: number]: { [tokenAddress: string]: Token }
-  }>("allChainsTokens", {})
   const { chain } = useAppChain()
   const { walletERC20Balances, nativeBalance } = useWalletTokensBalances()
 
+  const [allChainsTokens, setAllChainsTokens] = useLocalStorageState<{
+    [chainId: number]: { [tokenAddress: string]: Token }
+  }>("allChainsTokens", {})
+
   useEffect(() => {
-    const getListFromUrl = async () => {
+    const fetchListFromUrl = async () => {
       try {
         const tokenListUrls = [UNISWAP_TOKEN_LIST, KLEROS_LIST]
         const allTokens = []
 
-        // fetch token lists from multiple URLs
+        // Fetch token lists from multiple URLs
         for (const url of tokenListUrls) {
           try {
-            const result = await fetch(url).then((res) => res.json())
+            const response = await fetch(url)
+            const result = await response.json()
             const tokenList = result.tokens
-            allTokens.push(...tokenList)
+
+            allTokens.push(...tokenList) //Spread all result tokens in allTokens
           } catch (error) {
             console.error(`Error fetching token list from ${url}: ${error}`)
           }
         }
 
-        // Remove duplicate tokens based on their address
+        // Remove duplicate tokens based on their addresses and chains
         const uniqueTokens = allTokens.reduce((result, token) => {
           const isDuplicate = result.find(
-            (t: any) => t.address === token.address
+            (t: any) =>
+              t.address === token.address && t.chainId === token.chainId
           )
           if (!isDuplicate) {
             result.push(token)
@@ -69,6 +72,7 @@ export const ERC20TokensProvider = (props: { children: ReactNode }) => {
           return result
         }, {})
 
+        //Sort tokens
         // const sortTokensAlphabetically = (groupedTokens: any) => {
         //   const sortedTokens: any = {}
 
@@ -94,47 +98,64 @@ export const ERC20TokensProvider = (props: { children: ReactNode }) => {
       }
     }
 
-    getListFromUrl()
+    fetchListFromUrl()
   }, [])
 
+  //Get wallet balance and add to token details
   const combinedWalletBalancesAndTokenList = useMemo(() => {
-    if (!allChainsTokens || !walletERC20Balances) return {}
+    if (!allChainsTokens || !walletERC20Balances) return
     const chainTokens = allChainsTokens[chain.id]
     if (!chainTokens) return
 
-    const combinedResult: { [address: string]: any } = {}
+    const supportedWalletTokensResult: { [address: string]: Token } = {}
+    const hiddenTokens: { [address: string]: Token } = {}
     const updatedTokenList = { ...chainTokens }
 
     //Add the native token to display list first
     const nativeToken = SUPPORTED_CHAIN[chain.id].nativeCurrency
     if (nativeToken) {
-      combinedResult[nativeToken?.address.toLowerCase()] = {
+      supportedWalletTokensResult[nativeToken?.address.toLowerCase()] = {
         ...nativeToken,
-        balance: nativeBalance ? nativeBalance : "",
+        balance: nativeBalance || "",
       }
     }
+    //Remove native token from rest fetched tokens
+    delete updatedTokenList[nativeToken.address]
 
-    //get each wallet token info from the full token list and push to combinedResult
+    //Loop through wallet tokens and push to supportedWalletTokensResult or hiddenTokens
     for (let i = 0; i < Object.keys(walletERC20Balances).length; i++) {
       const walletToken = Object.values(walletERC20Balances)[i]
       const tokenAddress = walletToken.tokenAddress.toLowerCase()
 
       if (chainTokens[tokenAddress]) {
-        combinedResult[tokenAddress] = {
+        //Add to combined token list
+        supportedWalletTokensResult[tokenAddress] = {
           ...chainTokens[tokenAddress],
           balance: walletToken.balance,
         }
+
+        //Remove from fetched tokens list
         delete updatedTokenList[tokenAddress]
+      } else {
+        //If not in fetched list, add to hidden list
+        hiddenTokens[tokenAddress] = {
+          address: walletToken.tokenAddress,
+          chainId: chain.id,
+          decimals: walletToken.decimals,
+          logoURI: "/icons/tokens/defaultToken.svg",
+          name: walletToken.name,
+          symbol: walletToken.symbol,
+          balance: walletToken.balance,
+          hidden: true,
+        }
       }
     }
 
-    const finalResult = Object.assign(
-      {},
-      combinedResult,
-      Object.assign({}, combinedResult, updatedTokenList as {})
-    )
-
-    console.log({ finalResult })
+    const finalResult = {
+      ...supportedWalletTokensResult,
+      ...hiddenTokens,
+      ...updatedTokenList,
+    }
 
     return finalResult
   }, [allChainsTokens, walletERC20Balances, chain?.id, nativeBalance])

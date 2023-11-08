@@ -9,12 +9,16 @@ export const formatAddress = (address: string) =>
     address.length
   )}`
 
-export const weiToEther = (weiAmount: number, decimal: number = 18) => {
+export const weiToEther = (
+  weiAmount: number,
+  decimal: number = 18,
+  dp: number = 4
+) => {
   if (!weiAmount) return "0"
   const divider = 10 ** decimal
   const etherAmount = Number(weiAmount / divider)
 
-  return etherAmount.toFixed(4)
+  return etherAmount.toFixed(dp)
 }
 
 export const compareStringsIgnoreCase = (str1: string, str2: string) => {
@@ -42,3 +46,6 @@ export const formatShortDate = (date: Date) => {
     return Math.floor(duration.asYears()) + "y"
   }
 }
+
+export const getTokenLogoUrl = (url: string) =>
+  url ? (url.includes("ipfs") ? formatIpfsImage(url) : url) : ""

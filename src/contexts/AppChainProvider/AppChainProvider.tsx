@@ -8,16 +8,15 @@ import React, {
 } from "react"
 import { useNetwork, useSwitchNetwork } from "wagmi"
 import useLocalStorageState from "../../hooks/useLocalStorageState"
-import { useEvmTokenPrice } from "@moralisweb3/next"
 
 interface AppChainContextProps {
   chain: any //TODO Replace with chain type
   isSupportedChainConnected: boolean
-  setIsChainModalVisible: (isVisible: boolean) => void
   isChainModalVisible: boolean
-  switchSelectedChain: (chainId: number) => void
   pendingChainId: number | undefined
   status: "error" | "success" | "loading" | "idle"
+  setIsChainModalVisible: (isVisible: boolean) => void
+  switchSelectedChain: (chainId: number) => void
 }
 
 const AppChainContext = createContext<AppChainContextProps>(
@@ -67,7 +66,7 @@ const AppChainProvider = (props: { children: ReactNode }) => {
     //If selected chain is different from connected chain. Switch selected chain to connected chain
     if (connectedChain?.id && connectedChain?.id !== selectedChain.id) {
       const newSelectedChain = SUPPORTED_CHAIN[connectedChain?.id]
-      setSelectedChain(newSelectedChain)
+      setSelectedChain(newSelectedChain || SUPPORTED_CHAIN[DEFAULT_CHAIN_ID])
     }
   }, [connectedChain?.id, selectedChain.id, setSelectedChain])
 
@@ -75,14 +74,14 @@ const AppChainProvider = (props: { children: ReactNode }) => {
     <AppChainContext.Provider
       value={{
         chain: selectedChain,
+        isChainModalVisible,
+        pendingChainId,
+        status,
         isSupportedChainConnected: connectedChain?.id
           ? SUPPORTED_CHAIN[connectedChain?.id]
           : false,
-        setIsChainModalVisible,
-        isChainModalVisible,
         switchSelectedChain,
-        pendingChainId,
-        status,
+        setIsChainModalVisible,
       }}
     >
       {props.children}

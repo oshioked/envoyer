@@ -101,9 +101,6 @@ export default function Home() {
               <SwitchControl
                 options={[
                   {
-                    name: "Settings",
-                  },
-                  {
                     name: "Activity",
                     child: (
                       <div className="flex justify-center items-center gap-2">
@@ -113,6 +110,9 @@ export default function Home() {
                         )}
                       </div>
                     ),
+                  },
+                  {
+                    name: "Settings",
                   },
                 ]}
                 selected={sideFormState}

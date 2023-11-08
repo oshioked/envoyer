@@ -10,17 +10,6 @@ interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     CustomButtonProps {}
 
-// const colors = {
-//   primary: {
-//     bg: "#67FCC3",
-//     text: "black",
-//   },
-//   secondary: {
-//     bg: "#375449",
-//     text: "#67FCC3",
-//   },
-// }
-
 const Button = (props: ButtonProps) => {
   const { variant, ...rest } = props
   const className = {

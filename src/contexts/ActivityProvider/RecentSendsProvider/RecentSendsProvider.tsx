@@ -12,21 +12,17 @@ import { useAccount } from "wagmi"
 import { SEND_STATUS } from "@/constants/send"
 import { compareStringsIgnoreCase } from "@/utils/utils"
 import { useAppChain } from "../../AppChainProvider/AppChainProvider"
-
-export interface RecentSend {
-  txHash: string
-  tokenAmt: string
-  to: string
-  tokenAddress: string
-  status: string
-  time: string
-}
+import { SendData } from "../ActivityProvider"
+import { SUPPORTED_CHAIN } from "@/constants/chains"
+import { transferABI } from "@/hooks/useSendToken"
+import { decodeFunctionData } from "viem"
 
 interface RecentSendsContextProps {
   isLoading: boolean
-  recentSends: RecentSend[]
-  addNewSend: (send: RecentSend) => void
+  recentSends: SendData[]
+  addConfirmedSend: (send: SendData, chainId: number) => void
 }
+
 const RecentSendsContext = createContext<RecentSendsContextProps>(
   {} as RecentSendsContextProps
 )
@@ -34,47 +30,105 @@ const RecentSendsContext = createContext<RecentSendsContextProps>(
 const RecentSendsProvider = (props: { children: ReactNode }) => {
   const { address } = useAccount()
   const { chain } = useAppChain()
-  const [justConfirmedSends, setJustConfirmedSends] = useState<RecentSend[]>([])
-  const [recentSends, setRecentSend] = useState<RecentSend[]>([])
+  const [justConfirmedSends, setJustConfirmedSends] = useState<{
+    [chainId: number]: SendData[]
+  }>({})
+  const [fetchedRecentSends, setFetchedRecentSends] = useState<{
+    [chainId: number]: SendData[]
+  }>({})
   const [isLoading, setIsLoading] = useState(false)
 
-  const addNewSend = (send: RecentSend) => {
-    const existing = recentSends.find((s) => s.txHash === send.txHash)
+  const addConfirmedSend = (send: SendData, chainId: number) => {
+    const existing = fetchedRecentSends[chainId].find(
+      (s) => s.txHash === send.txHash
+    )
     if (!existing) {
-      setJustConfirmedSends([send, ...justConfirmedSends])
+      setJustConfirmedSends({
+        ...justConfirmedSends,
+        [chainId]: [send, ...(justConfirmedSends[chainId] || [])],
+      })
     }
   }
 
   const getRecentTransfers = useCallback(async () => {
-    if (!address) return
+    if (!address || !Moralis.Core.isStarted) return
     try {
-      if (Moralis.Core.isStarted) {
-        setIsLoading(true)
-        const response = await Moralis.EvmApi.token.getWalletTokenTransfers({
-          chain: chain.id,
-          address,
-        })
-        const result = response.raw.result
-          .slice(0, 5)
-          .filter((result) =>
-            compareStringsIgnoreCase(result.from_address, address)
-          )
-          .map((result) => ({
-            txHash: result.transaction_hash,
-            tokenAmt: result.value,
-            to: result.to_address,
-            tokenAddress: result.address,
-            status: SEND_STATUS.success,
-            time: result.block_timestamp,
-          }))
+      setIsLoading(true)
 
-        console.log({ response }, "@recent sends")
+      //Get Native token transfers
 
-        setRecentSend(result)
+      const txs = await Moralis.EvmApi.transaction.getWalletTransactions({
+        address,
+        chain: chain.id,
+      })
+
+      let nativeTokenResults: SendData[] = []
+      const nativeCurrency = SUPPORTED_CHAIN[chain.id].nativeCurrency
+
+      for (let i = 0; i < txs.result.length; i++) {
+        const tx = txs.result[i]
+        const { from, to, hash, blockTimestamp, data } = tx.toJSON()
+
+        if (
+          from.toLowerCase() === address.toLowerCase() &&
+          to?.toLowerCase() === nativeCurrency.address.toLowerCase()
+        ) {
+          const { functionName, args } = decodeFunctionData({
+            abi: transferABI,
+            data: data as `0x${string}`,
+          })
+
+          if (functionName === "transfer") {
+            nativeTokenResults.push({
+              txHash: hash,
+              tokenAmt: args ? (args[1] as string) : "",
+              to: args ? (args[0] as string) : "",
+              tokenAddress: nativeCurrency.address,
+              tokenSymbol: nativeCurrency.symbol,
+              status: SEND_STATUS.success,
+              time: blockTimestamp,
+              chainId: chain.id,
+            })
+          }
+        }
       }
+
+      //Get ERC20 token transfers
+      const response = await Moralis.EvmApi.token.getWalletTokenTransfers({
+        chain: chain.id,
+        address,
+      })
+
+      const erc20TokensResult: SendData[] = response.raw.result
+        .slice(0, 5)
+        .filter((result) =>
+          compareStringsIgnoreCase(result.from_address, address)
+        )
+        .map((result) => ({
+          txHash: result.transaction_hash,
+          tokenAmt: result.value,
+          to: result.to_address,
+          tokenAddress: result.address,
+          status: SEND_STATUS.success,
+          time: result.block_timestamp,
+          tokenSymbol: result.token_symbol,
+          chainId: chain.id,
+        }))
+
+      const combinedResult = [
+        ...nativeTokenResults.slice(0, 5),
+        ...erc20TokensResult,
+      ]
+
+      combinedResult.sort(
+        (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+      )
+
+      setFetchedRecentSends({
+        [chain.id]: combinedResult, //
+      })
     } catch (error) {
-      console.log(error)
-      console.log("Error getting recent transfers, 'recent sends")
+      console.log("Error getting recent transfers", error)
     } finally {
       setIsLoading(false)
     }
@@ -85,18 +139,24 @@ const RecentSendsProvider = (props: { children: ReactNode }) => {
   }, [getRecentTransfers])
 
   const combineRecentSends = useMemo(() => {
-    //Filter in case fetched sends has tx already
-    const filteredConfirmedSends = justConfirmedSends.filter(
-      (send) => send.txHash !== recentSends[0].txHash
-    )
-    console.log({ filteredConfirmedSends, recentSends })
-    return [...filteredConfirmedSends, ...recentSends]
-  }, [justConfirmedSends, recentSends])
+    //Filter just confirmed sends in case fetched sends has a just confirmed tx already
+    let filteredConfirmedSends: SendData[] = []
+    if (
+      justConfirmedSends[chain.id] &&
+      justConfirmedSends[chain.id].length &&
+      fetchedRecentSends[chain.id]?.length
+    ) {
+      filteredConfirmedSends = justConfirmedSends[chain.id]?.filter(
+        (send) => send.txHash !== fetchedRecentSends[chain.id][0]?.txHash
+      )
+    }
+    return [...filteredConfirmedSends, ...(fetchedRecentSends[chain.id] || [])]
+  }, [justConfirmedSends, fetchedRecentSends, chain.id])
 
   return (
     <RecentSendsContext.Provider
       value={{
-        addNewSend,
+        addConfirmedSend,
         recentSends: combineRecentSends,
         isLoading,
       }}

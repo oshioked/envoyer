@@ -1,6 +1,8 @@
 import StatusDotIndicator from "@/components/StatusDotIndicator/StatusDotIndicator"
-import { PendingSend } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
-import { RecentSend } from "@/contexts/ActivityProvider/RecentSendsProvider/RecentSendsProvider"
+import {
+  SendData,
+  SendStatus,
+} from "@/contexts/ActivityProvider/ActivityProvider"
 import {
   formatAddress,
   formatIpfsImage,
@@ -12,11 +14,11 @@ import React from "react"
 import Skeleton from "react-loading-skeleton"
 
 const TransactionRow = (props: {
-  onTransactionClick: Function
-  send: PendingSend | RecentSend
+  onTransactionClick: (txHash: string) => void
+  send: SendData
   token: Token
   listIndex: number
-  status: "success" | "processing"
+  status: SendStatus
 }) => {
   const { send, token, listIndex, status, onTransactionClick } = props
   const amount = token
@@ -25,7 +27,7 @@ const TransactionRow = (props: {
 
   return !token ? null : (
     <div
-      onClick={() => onTransactionClick(send)}
+      onClick={() => onTransactionClick(send.txHash)}
       className={`flex justify-between items-center p-4 ${
         listIndex !== 0 ? "border-t" : ""
       } border-[#FFFFFF33] transition-colors hover:bg-[#101114] cursor-pointer`}

@@ -1,17 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React from "react"
 import TokenInput from "../TokenInput/TokenInput"
 import Button, { ButtonVariant } from "../Button/Button"
 import TextInput from "../TextInput/TextInput"
 import { useAccount } from "wagmi"
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit"
 import { isAddress } from "ethers"
-import { useErc20Tokens } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { useWalletTokensBalances } from "@/contexts/Erc20TokensBalancesProvider/Erc20TokensBalancesProvider"
-import { useEvmTokenPrice } from "@moralisweb3/next"
-import { EvmChain } from "moralis/common-evm-utils"
-import Moralis from "moralis"
-import { ETH_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS } from "@/constants/tokens"
+import { useTokenPrice } from "@/hooks/useTokenPrice"
 
 interface SendCardProps {
   selectedToken: any
@@ -33,57 +29,22 @@ export const SendCard = (props: SendCardProps) => {
     setAmount,
     openConfirmSendModal,
   } = props
-  const { isConnected, address } = useAccount()
+  const { isConnected } = useAccount()
   const { isSupportedChainConnected } = useAppChain()
   const { openConnectModal } = useConnectModal()
   const { openChainModal } = useChainModal()
-  const { chain } = useAppChain()
-
-  const [isFetchingTokenUsdPrice, setIsFetchingTokenUsdPrice] = useState(false)
-  const [selectedTokenPriceInUsd, setSelectedTokenPriceInUsd] = useState(0)
-
-  const getTokenPrice = useCallback(
-    async (tokenAddress: string) => {
-      if (Moralis.Core.isStarted) {
-        setIsFetchingTokenUsdPrice(true)
-
-        //For some reason moralis returns an error for 0x0000000000000000000000000000000 address which is a token address for eth
-        //So use weth address for eth
-        if (tokenAddress === ETH_TOKEN_ADDRESS) {
-          tokenAddress = WETH_TOKEN_ADDRESS
-        }
-        try {
-          const response = await Moralis.EvmApi.token.getTokenPrice({
-            address: tokenAddress,
-            chain: chain.id,
-          })
-
-          setSelectedTokenPriceInUsd(response.toJSON().usdPrice)
-
-          console.log(response.toJSON())
-        } catch (error) {
-          console.log(error)
-          setSelectedTokenPriceInUsd(0)
-        } finally {
-          setIsFetchingTokenUsdPrice(false)
-        }
-      }
-    },
-    [chain]
+  const { isLoading: isFetchingTokenUsdPrice, tokenPriceInUsd } = useTokenPrice(
+    selectedToken.address
   )
-
-  useEffect(() => {
-    getTokenPrice(selectedToken.address)
-  }, [getTokenPrice, selectedToken.address])
 
   const { walletERC20Balances, isLoading: isLoadingBalance } =
     useWalletTokensBalances()
   const selectedTokenUpdatedBalance =
     walletERC20Balances[selectedToken.address.toLowerCase()]?.balance
 
-  console.log({ walletERC20Balances, selectedToken })
-  const onAmountChange = (event: any) => {
-    setAmount(event.target.value)
+  const onAmountChange = (value: number) => {
+    if (isNaN(Number(value))) return
+    setAmount(value)
   }
 
   const onRecipientAddressChange = (event: any) => {
@@ -114,7 +75,10 @@ export const SendCard = (props: SendCardProps) => {
         variant: "disabled",
         onClick: () => null,
       }
-    } else if (Number(amount) > Number(selectedTokenUpdatedBalance)) {
+    } else if (
+      !selectedTokenUpdatedBalance ||
+      Number(amount) > Number(selectedTokenUpdatedBalance)
+    ) {
       return {
         title: `Insufficient ${selectedToken.symbol} balance`,
         variant: "disabled",
@@ -135,15 +99,13 @@ export const SendCard = (props: SendCardProps) => {
     }
   }
 
-  console.log(Number(amount), Number(selectedTokenUpdatedBalance))
-
   return (
     <div className="flex-1 h-fit rounded-[16px] bg-[#1C2026] py-[35px] px-[50px] flex flex-col gap-5">
       <h5 className="font-bold text-[20px]">Send token</h5>
       <TokenInput
         selectedToken={selectedToken}
         amount={amount}
-        tokenPriceInUsd={selectedTokenPriceInUsd}
+        tokenPriceInUsd={tokenPriceInUsd}
         isLoadingTokenPrice={isFetchingTokenUsdPrice}
         onAmountChange={onAmountChange}
         setIsTokensModalOpen={setIsTokensModalOpen}

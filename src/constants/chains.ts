@@ -1,4 +1,6 @@
-export const DEFAULT_CHAIN_ID = 42161
+import { arbitrum } from "viem/chains"
+
+export const DEFAULT_CHAIN_ID = arbitrum.id
 
 export const SUPPORTED_CHAIN: { [id: number]: any } = {
   1: {
@@ -26,7 +28,7 @@ export const SUPPORTED_CHAIN: { [id: number]: any } = {
     iconUrl: "/icons/tokens/polygon.svg",
     iconBackground: "#fff",
     nativeCurrency: {
-      address: "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
+      address: "0x0000000000000000000000000000000000001010",
       name: "Polygon",
       symbol: "MATIC",
       decimals: 18,

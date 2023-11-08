@@ -1,12 +1,14 @@
-import Button from "@/components/Button/Button"
 import { useErc20Tokens } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
-import { formatAddress } from "@/utils/utils"
-import Image from "next/image"
-import React, { useEffect, useState } from "react"
+import React from "react"
 import Modal from "../Modal/Modal"
 import ConfirmSendModal from "./ConfirmSendModal/ConfirmSendModal"
+import useGasPrice from "@/hooks/useGasPrice"
 import useSendToken from "@/hooks/useSendToken"
-import LoadingIndicator from "../LoadingIndicator/LoadingIndicator"
+import { GAS_OPTION_DEFAULT, GasOptionKey } from "@/constants/gas"
+import useLocalStorageState from "@/hooks/useLocalStorageState"
+import { ProcessingModal } from "./ProcessingModal/ProcessingModal"
+import { parseUnits } from "ethers"
+import { useWalletTokensBalances } from "@/contexts/Erc20TokensBalancesProvider/Erc20TokensBalancesProvider"
 
 const TransactionModal = (props: {
   sendDetails: {
@@ -20,79 +22,97 @@ const TransactionModal = (props: {
 }) => {
   const { sendDetails, isOpen, setIsOpen, resetForm } = props
   const { toAddress, amount, token } = sendDetails
+
+  const [isSendDetailsConfirmed, sendIsSendDetailsConfirmed] =
+    useLocalStorageState("isSendDetailsConfirmed", false)
+
   const tokenList = useErc20Tokens()
-
   const tokenDetails = tokenList[token.address.toLowerCase()]
-  const { logoURI } = tokenDetails || {}
+  const { logoURI, symbol: tokenSymbol } = tokenDetails || {}
 
-  const { sendToken, isLoading, success, error } = useSendToken()
+  const [selectedGasOption, setSelectedGasOption] =
+    useLocalStorageState<GasOptionKey>("selectedGasOption", "low")
+  const selectedGasPriority = GAS_OPTION_DEFAULT[selectedGasOption]?.priority
+
+  const { estimatedGas, estimatedMaxFeePerGas, gasPriceInUsd } = useGasPrice(
+    token.address,
+    amount,
+    toAddress,
+    selectedGasPriority
+  )
+
+  const {
+    sendToken,
+    isLoading: isSubmiting,
+    success,
+    error,
+    confirmed,
+    reset,
+  } = useSendToken({
+    onSubmitted: () => {
+      if (resetForm) {
+        resetForm()
+      }
+      reset()
+    },
+    onSubmitFailed: () => {
+      sendIsSendDetailsConfirmed(false)
+    },
+
+    gas: estimatedGas,
+    maxFeePerGas: estimatedMaxFeePerGas,
+  })
+
+  const onConfirmClick = async () => {
+    sendIsSendDetailsConfirmed(true)
+    sendToken(
+      token.address as `0x${string}`,
+      parseUnits(amount.toString(), tokenDetails.decimals),
+      toAddress as `0x${string}`,
+      tokenSymbol
+    )
+  }
+
+  const resetConfirmedState = () => sendIsSendDetailsConfirmed(false)
 
   return (
     <Modal
-      contentClassName="w-[440px] h-[522px] border border-[#FFFFFF33]"
+      contentClassName="w-fit h-fit border border-[#FFFFFF33]"
       isOpen={isOpen}
       setIsOpen={() => {}}
     >
-      <div className="p-5 flex flex-col gap-[20px] h-full">
-        {!isLoading || true ? (
+      {!isSendDetailsConfirmed ? (
+        <div className="p-5 flex flex-col gap-[20px] w-[420px] h-[502px]">
           <ConfirmSendModal
             tokenURI={logoURI}
+            tokenSymbol={tokenSymbol}
             setIsOpen={setIsOpen}
             amount={amount}
-            tokenAddress={token.address}
             toAddress={toAddress}
-            sendToken={sendToken}
-            isLoading={isLoading}
-            resetForm={resetForm}
+            onConfirmSend={onConfirmClick}
+            gasPriceInUsd={gasPriceInUsd}
+            selectedGasOption={selectedGasOption}
+            setSelectedGasOption={setSelectedGasOption}
           />
-        ) : (
-          //TODO - Remove whole conditional render
-          <></>
-          // <div className="flex flex-col justify-between items-center h-full">
-          //   <div className="flex justify-between pb-[15px] w-full">
-          //     <Button
-          //       className="flex items-center gap-2 !py-2 !px-3 opacity-60"
-          //       variant="disabled"
-          //     >
-          //       <Image
-          //         src={"icons/tokens/eth.svg"}
-          //         width={20}
-          //         height={20}
-          //         alt=""
-          //       />
-          //       <p>Arbitrum</p>
-          //     </Button>
-          //     <div
-          //       onClick={() => props.setIsOpen(false)}
-          //       className="flex items-center cursor-pointer"
-          //     >
-          //       <Image src="/icons/close.svg" width={28} height={28} alt="" />
-          //     </div>
-          //   </div>
-          //   <div className="flex flex-col items-center pb-[15px] border-b w-full">
-          //     <div className="flex items-center gap-[8px]">
-          //       <Image
-          //         className="w-[22px] h-[22px]"
-          //         src={logoURI || ""}
-          //         width={22}
-          //         height={22}
-          //         alt=""
-          //       />
-          //       <h3 className="text-xl font-bold">{amount || "2.1543"}</h3>
-          //     </div>
-          //     <div>
-          //       <Image src={'/icons/back.svg'} alt={}
-          //       </div>
-          //     <h3 className="text-lg">{"0xfe...HYd5"}</h3>
-          //   </div>
-          //   <LoadingIndicator />
-          //   <div>
-          //     <p>Transaction is loading</p>
-          //     <p>Complete in your wallet</p>
-          //   </div>
-          // </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="p-5 flex flex-col gap-[20px] w-[420px] h-[302px]">
+          <ProcessingModal
+            isProcessing={isSubmiting}
+            confirmed={confirmed}
+            success={Boolean(success)}
+            error={error}
+            onClose={() => {
+              setIsOpen(false)
+              resetConfirmedState()
+            }}
+            tokenSymbol={tokenSymbol}
+            tokenURI={logoURI}
+            toAddress={toAddress}
+            amount={amount.toString()}
+          />
+        </div>
+      )}
     </Modal>
   )
 }

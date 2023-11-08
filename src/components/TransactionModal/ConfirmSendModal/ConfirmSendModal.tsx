@@ -1,39 +1,33 @@
 import Button from "@/components/Button/Button"
-import LoadingIndicator from "@/components/LoadingIndicator/LoadingIndicator"
+import { GAS_OPTION_DEFAULT, GasOptionKey } from "@/constants/gas"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
-import useLocalStorageState from "@/hooks/useLocalStorageState"
-import useSendToken from "@/hooks/useSendToken"
 import { formatAddress } from "@/utils/utils"
 import Image from "next/image"
-import React, { useState } from "react"
+import React from "react"
 
 const ConfirmSendModal = (props: {
-  tokenURI: string
-  setIsOpen: (isOpen: boolean) => void
   amount: number
-  tokenAddress: string
   toAddress: string
-  sendToken: (
-    tokenContractAddress: `0x${string}`,
-    amount: string,
-    to: `0x${string}`
-  ) => Promise<void>
-  isLoading: boolean
-  resetForm?: Function
+  tokenURI: string
+  tokenSymbol: string
+  gasPriceInUsd: number
+  selectedGasOption: GasOptionKey
+  setSelectedGasOption: Function
+  setIsOpen: (isOpen: boolean) => void
+  onConfirmSend: Function
 }) => {
-  const { amount, setIsOpen, tokenURI, tokenAddress, toAddress, resetForm } =
-    props
-  const [showGasOptions, setShowGasOptions] = useLocalStorageState(
-    "showGasOptions",
-    false
-  )
-  const [selectedGasOption, setSelectedGasOption] = useLocalStorageState<
-    "Low" | "Market" | "Aggressive"
-  >("selectedGasOption", "Low")
+  const {
+    amount,
+    tokenSymbol,
+    tokenURI,
+    gasPriceInUsd,
+    toAddress,
+    selectedGasOption,
+    setSelectedGasOption,
+    setIsOpen,
+    onConfirmSend,
+  } = props
 
-  const { sendToken, isLoading, success, error, confirmed } = useSendToken({
-    onSuccess: resetForm || (() => {}),
-  })
   const { chain } = useAppChain()
 
   return (
@@ -50,7 +44,7 @@ const ConfirmSendModal = (props: {
 
       <div className="flex justify-between items-center pb-[20px] border-b border-[#FFFFFF33]">
         <div className="flex flex-col gap-2">
-          <p className="text-xs opacity-50">SEND</p>
+          <p className="text-xs opacity-50">SEND {tokenSymbol}</p>
           <div className="flex items-center gap-[8px]">
             <Image
               className="w-[25px] h-[25px] rounded-full"
@@ -84,74 +78,41 @@ const ConfirmSendModal = (props: {
         </div>
         <div className="flex justify-between items-center">
           <p className="opacity-50">Network fee</p>
-          <p>$0.5</p>
-        </div>
-        <div className="flex justify-between items-center">
-          <p className="opacity-50">Est time</p>
-          <p>{"< 2mins"}</p>
-        </div>
-        <div
-          onClick={() => setShowGasOptions(!showGasOptions)}
-          className="flex justify-end items-center cursor-pointer"
-        >
-          <p className="text-xs text-[#6FEABB]">
-            {showGasOptions ? "Done" : "See other options"}
+          <p>
+            {gasPriceInUsd && !isNaN(gasPriceInUsd)
+              ? `$${gasPriceInUsd.toFixed(3)}`
+              : "--"}
           </p>
         </div>
-        {showGasOptions && (
-          <div className="flex bg-[#303947] h-11 gap-[5px] p-[5px] rounded-[15px]">
-            {["Low", "Market", "Aggressive"].map((a, i) => (
-              <Button
-                key={i}
-                className={`text-xs rounded-[10px] !p-0 flex-1 ${
-                  a !== selectedGasOption ? "!bg-transparent" : ""
-                }`}
-                onClick={() => setSelectedGasOption(a as any)}
-                variant="tertiary"
-              >
-                {a}
-              </Button>
-            ))}
-          </div>
-        )}
+        {/* <div className="flex justify-between items-center">
+          <p className="opacity-50">Est time</p>
+          <p>{"< 2mins"}</p>
+        </div> */}
+
+        <div className="flex bg-[#303947] h-9 gap-[5px] p-[5px] rounded-[15px]">
+          {Object.values(GAS_OPTION_DEFAULT).map((option, i) => (
+            <Button
+              key={i}
+              className={`text-xs font-semibold rounded-[12px] !p-0 flex-1 ${
+                option.key !== selectedGasOption ? "!bg-transparent" : ""
+              }`}
+              onClick={() => setSelectedGasOption(option.key as any)}
+              variant="tertiary"
+            >
+              {option.name}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-auto">
-        {isLoading ? (
-          <div className="flex items-center w-full gap-5">
-            <Button className="flex-1" variant="disabled">
-              {success
-                ? "Sent successfully"
-                : error
-                ? error
-                : !confirmed
-                ? "Complete in your wallet"
-                : "Submitted. Processing"}
-            </Button>
-            <div>
-              <LoadingIndicator
-                className="h-9 w-9"
-                isLoading={true}
-                success={Boolean(success)}
-                error={Boolean(error)}
-              />
-            </div>
-          </div>
-        ) : (
-          <Button
-            onClick={() =>
-              sendToken(
-                tokenAddress as `0x${string}`,
-                amount.toString(),
-                toAddress as `0x${string}`
-              )
-            }
-            className="w-full"
-            variant="primary"
-          >
-            Confirm send
-          </Button>
-        )}
+        <Button
+          onClick={() => onConfirmSend()}
+          className="w-full"
+          variant="primary"
+        >
+          Confirm send
+        </Button>
       </div>
     </>
   )

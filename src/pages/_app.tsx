@@ -9,21 +9,19 @@ import {
 } from "@rainbow-me/rainbowkit"
 import { configureChains, createConfig, WagmiConfig } from "wagmi"
 import { mainnet, polygon, optimism, arbitrum, base, zora } from "wagmi/chains"
-import { alchemyProvider } from "wagmi/providers/alchemy"
 import { publicProvider } from "wagmi/providers/public"
 import Moralis from "moralis"
 import { useEffect } from "react"
 import { merge } from "lodash"
 import { ERC20TokensProvider } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
-import PendingSendsProvider from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
-import { ToastContainer, toast } from "react-toastify"
+import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
-import RecentSendsProvider from "@/contexts/ActivityProvider/RecentSendsProvider/RecentSendsProvider"
 import "react-loading-skeleton/dist/skeleton.css"
 import AppChainProvider from "@/contexts/AppChainProvider/AppChainProvider"
 import Erc20TokensBalancesProvider from "@/contexts/Erc20TokensBalancesProvider/Erc20TokensBalancesProvider"
 import { SkeletonTheme } from "react-loading-skeleton"
 import ActivityProvider from "@/contexts/ActivityProvider/ActivityProvider"
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc"
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [
@@ -33,7 +31,15 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
     arbitrum,
     //  base, zora
   ],
-  [publicProvider()]
+  [
+    publicProvider(),
+    jsonRpcProvider({
+      rpc: () => ({
+        http: `https://rpc.chiadochain.net`,
+        webSocket: `wss://rpc.chiadochain.net/wss`,
+      }),
+    }),
+  ]
 )
 
 const { connectors } = getDefaultWallets({

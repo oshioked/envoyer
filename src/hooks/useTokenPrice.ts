@@ -3,42 +3,56 @@ import {
   WRAPPED_NATIVE_TOKEN_ADDRESSES,
 } from "@/constants/tokens"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
+import { getCachedData, setCacheData } from "@/utils/cacheUtils"
 import Moralis from "moralis"
 import React, { useCallback, useEffect, useState } from "react"
+
+//TODO - Confirm this works and if yes, move to helpers folder
+const fetchTokenPrice = async (tokenAddress: string, chainId: number) => {
+  if (!Moralis.Core.isStarted) return
+  let fetchAddress = tokenAddress
+
+  //For some reason moralis returns an error for some native address
+  // So check for that and use Wrapped token instead
+  if (Object.values(NATIVE_TOKEN_ADDRESS).includes(tokenAddress)) {
+    fetchAddress = WRAPPED_NATIVE_TOKEN_ADDRESSES[chainId]
+  }
+  const response = await Moralis.EvmApi.token.getTokenPrice({
+    address: fetchAddress,
+    chain: chainId,
+  })
+  return response
+}
+
+const TOKEN_PRICE_CACHE_TIME = 360_000 //TODO experiment with this
 
 export const useTokenPrice = (tokenAddress: string) => {
   const { chain } = useAppChain()
   const [isLoading, setIsLoading] = useState(false)
-  const [tokenPriceInUsd, setTokenPriceInUsd] = useState(0)
+  const [tokenPriceInUsd, setTokenPriceInUsd] = useState<number>()
 
   const getTokenPrice = useCallback(async () => {
-    if (Moralis.Core.isStarted) {
-      setIsLoading(true)
-      let fetchAddress = tokenAddress
-      console.log({ fetchAddress })
+    //Try to get item from cache and cacheTimestamp
+    const cacheKey = `${tokenAddress}.usdPrice.${chain.id}`
+    const cachedPrice = getCachedData(cacheKey, TOKEN_PRICE_CACHE_TIME)
+    if (cachedPrice) return cachedPrice
 
-      //For some reason moralis returns an error for ETH address
-      // So check for that and use WETH instead
-      if (Object.values(NATIVE_TOKEN_ADDRESS).includes(tokenAddress)) {
-        fetchAddress = WRAPPED_NATIVE_TOKEN_ADDRESSES[chain.id]
-      }
-      try {
-        const response = await Moralis.EvmApi.token.getTokenPrice({
-          address: fetchAddress,
-          chain: chain.id,
-        })
+    if (!Moralis.Core.isStarted) return
+    setIsLoading(true)
+    try {
+      const response = await fetchTokenPrice(tokenAddress, chain.id)
+      const result = response?.toJSON().usdPrice
+      setTokenPriceInUsd(result)
 
-        setTokenPriceInUsd(response.toJSON().usdPrice)
-
-        console.log(response.toJSON())
-      } catch (error) {
-        console.log(error)
-        setTokenPriceInUsd(0)
-      } finally {
-        setIsLoading(false)
-      }
+      //Set cache data
+      setCacheData(cacheKey, result)
+    } catch (error) {
+      console.log(error)
+      setTokenPriceInUsd(0)
+    } finally {
+      setIsLoading(false)
     }
-  }, [chain, tokenAddress])
+  }, [tokenAddress, chain.id])
 
   useEffect(() => {
     getTokenPrice()

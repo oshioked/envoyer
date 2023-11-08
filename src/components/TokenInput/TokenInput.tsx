@@ -13,7 +13,7 @@ interface TokenInputProps {
   tokenPriceInUsd?: number
   isLoadingTokenPrice?: boolean
   setIsTokensModalOpen: (isOpen: boolean) => void
-  onAmountChange: ChangeEventHandler<HTMLInputElement>
+  onAmountChange: (amount: number) => void
 }
 
 const TokenInput = (props: TokenInputProps) => {
@@ -33,7 +33,6 @@ const TokenInput = (props: TokenInputProps) => {
   const selectedTokenUpdatedBalance =
     tokens[selectedToken.address.toLowerCase()]?.balance
 
-  console.log({ selectedTokenUpdatedBalance })
   return (
     <div className="bg-[#101114] pt-4 pb-[27px] px-6 gap-4 rounded-[15px] flex justify-between h-[130px]">
       <div className="flex flex-col gap-1 flex-1 ">
@@ -41,7 +40,7 @@ const TokenInput = (props: TokenInputProps) => {
         <input
           type="number"
           value={amount}
-          onChange={onAmountChange}
+          onChange={(event) => onAmountChange(Number(event.target.value))}
           className="bg-transparent text-4xl w-full outline-none"
           placeholder="0"
         />
@@ -72,7 +71,14 @@ const TokenInput = (props: TokenInputProps) => {
           <Image src={"/icons/chevDown.svg"} width={13} height={13} alt="" />
         </Button>
         {isConnected && (
-          <div className="flex gap-1 justify-end">
+          <div
+            onClick={() =>
+              !isLoadingBalance && selectedTokenUpdatedBalance
+                ? onAmountChange(Number(selectedTokenUpdatedBalance))
+                : null
+            }
+            className="flex gap-1 justify-end cursor-pointer"
+          >
             <Image src={"/icons/wallet.svg"} width={20} height={20} alt="" />
             {isLoadingBalance ? (
               <div className="h-13 w-[50px]">

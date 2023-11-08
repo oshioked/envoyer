@@ -2,17 +2,18 @@ import Image from "next/image"
 import Link from "next/link"
 import React from "react"
 import Button from "../Button/Button"
-import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit"
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 
 export const Navbar = () => {
-  const { openConnectModal } = useConnectModal()
   const { chain, setIsChainModalVisible } = useAppChain()
   return (
     <nav className="flex justify-between items-center border-b-2 border-[#202733] w-full px-[5%] h-[80px]">
       <Link href={"/"}>
-        <Image src={"/icons/logo.svg"} width={43} height={36} alt="" />
-        {/* <h4>Envoyer</h4> */}
+        <div className="flex">
+          <Image src={"/icons/logo.svg"} width={43} height={36} alt="" />
+          <h4>Envoyer</h4>
+        </div>
       </Link>
 
       {/* Buttons */}
