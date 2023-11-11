@@ -18,6 +18,7 @@ import {
   getERC20TokensTransfers,
   getNativeTokenTransfers,
 } from "@/utils/transactions"
+import { useMoralisInitialized } from "@/contexts/MoralisProvider/MoralisProvider"
 
 interface RecentSendsContextProps {
   isLoading: boolean
@@ -32,6 +33,7 @@ const RecentSendsContext = createContext<RecentSendsContextProps>(
 const RecentSendsProvider = (props: { children: ReactNode }) => {
   const { address } = useAccount()
   const { chain } = useAppChain()
+  const { isInitialized: isMoralisInitialized } = useMoralisInitialized()
   const [justConfirmedSends, setJustConfirmedSends] = useState<{
     [chainId: number]: SendData[]
   }>({})
@@ -53,7 +55,7 @@ const RecentSendsProvider = (props: { children: ReactNode }) => {
   }
 
   const getRecentTransfers = useCallback(async () => {
-    if (!address || !Moralis.Core.isStarted) return
+    if (!address || !isMoralisInitialized) return
     try {
       setIsLoading(true)
 
@@ -80,7 +82,7 @@ const RecentSendsProvider = (props: { children: ReactNode }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [address, chain.id])
+  }, [address, chain.id, isMoralisInitialized])
 
   useEffect(() => {
     getRecentTransfers()

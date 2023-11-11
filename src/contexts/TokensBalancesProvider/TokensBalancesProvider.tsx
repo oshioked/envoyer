@@ -12,6 +12,7 @@ import { useAppChain } from "../AppChainProvider/AppChainProvider"
 import { SUPPORTED_CHAIN } from "@/constants/chains"
 import { weiToEther } from "@/utils/tokens"
 import { fetchBalance } from "wagmi/actions"
+import { useMoralisInitialized } from "../MoralisProvider/MoralisProvider"
 interface TokenBalance {
   tokenAddress: string
   balance: string
@@ -37,6 +38,7 @@ const TokensBalancesContext = createContext<TokensBalancesContextProps>(
 const TokensBalancesProvider = (props: { children: ReactNode }) => {
   const { chain } = useAppChain()
   const { address } = useAccount()
+  const { isInitialized: isMoralisInitialized } = useMoralisInitialized()
 
   const [isLoading, setIsLoading] = useState(false)
   const [nativeBalance, setNativeBalance] = useState("0")
@@ -45,7 +47,7 @@ const TokensBalancesProvider = (props: { children: ReactNode }) => {
   const [shouldRefetch, setShouldRefetch] = useState({})
 
   const getAllTokensInWallet = useCallback(async () => {
-    if (!address || !Moralis.Core.isStarted) {
+    if (!address || !isMoralisInitialized) {
       setNativeBalance("0")
       setWalletTokensBalances({})
       return
@@ -108,7 +110,7 @@ const TokensBalancesProvider = (props: { children: ReactNode }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [address, chain])
+  }, [address, chain, isMoralisInitialized])
 
   useEffect(() => {
     getAllTokensInWallet()

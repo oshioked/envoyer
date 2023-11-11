@@ -3,6 +3,7 @@ import {
   WRAPPED_NATIVE_TOKEN_ADDRESSES,
 } from "@/constants/tokens"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
+import { useMoralisInitialized } from "@/contexts/MoralisProvider/MoralisProvider"
 import { getCachedData, setCacheData } from "@/utils/cacheUtils"
 import Moralis from "moralis"
 import React, { useCallback, useEffect, useState } from "react"
@@ -27,6 +28,7 @@ const fetchTokenPrice = async (tokenAddress: string, chainId: number) => {
 
 export const useTokenPrice = (tokenAddress: string) => {
   const { chain } = useAppChain()
+  const { isInitialized: isMoralisInitialized } = useMoralisInitialized()
   const [isLoading, setIsLoading] = useState(false)
   const [tokenPriceInUsd, setTokenPriceInUsd] = useState<number>()
 
@@ -39,7 +41,7 @@ export const useTokenPrice = (tokenAddress: string) => {
       return cachedPrice
     }
 
-    if (!Moralis.Core.isStarted) return
+    if (!isMoralisInitialized) return
     setIsLoading(true)
     try {
       const response = await fetchTokenPrice(tokenAddress, chain.id)
@@ -62,7 +64,7 @@ export const useTokenPrice = (tokenAddress: string) => {
     } finally {
       setIsLoading(false)
     }
-  }, [tokenAddress, chain.id])
+  }, [tokenAddress, chain.id, isMoralisInitialized])
 
   useEffect(() => {
     getTokenPrice()
