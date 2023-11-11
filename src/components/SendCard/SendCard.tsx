@@ -6,7 +6,7 @@ import { useAccount } from "wagmi"
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit"
 import { isAddress } from "ethers"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
-import { useWalletTokensBalances } from "@/contexts/Erc20TokensBalancesProvider/Erc20TokensBalancesProvider"
+import { useWalletTokensBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
 import { useTokenPrice } from "@/hooks/useTokenPrice"
 
 interface SendCardProps {
@@ -34,16 +34,16 @@ export const SendCard = (props: SendCardProps) => {
   const { openConnectModal } = useConnectModal()
   const { openChainModal } = useChainModal()
   const { isLoading: isFetchingTokenUsdPrice, tokenPriceInUsd } = useTokenPrice(
-    selectedToken.address
+    selectedToken?.address
   )
 
-  const { walletERC20Balances, isLoading: isLoadingBalance } =
+  const { walletTokensBalances, isLoading: isLoadingBalance } =
     useWalletTokensBalances()
   const selectedTokenUpdatedBalance =
-    walletERC20Balances[selectedToken.address.toLowerCase()]?.balance
+    walletTokensBalances[selectedToken.address.toLowerCase()]?.balance
 
   const onAmountChange = (value: number) => {
-    if (isNaN(Number(value))) return
+    if (isNaN(Number(value)) || value < 0) return
     setAmount(value)
   }
 
@@ -77,7 +77,7 @@ export const SendCard = (props: SendCardProps) => {
       }
     } else if (
       !selectedTokenUpdatedBalance ||
-      Number(amount) > Number(selectedTokenUpdatedBalance)
+      Number(amount) > Number(selectedTokenUpdatedBalance) * 0.97 //TODO -Put this in a variable Can't send all your tokens
     ) {
       return {
         title: `Insufficient ${selectedToken.symbol} balance`,
@@ -100,7 +100,7 @@ export const SendCard = (props: SendCardProps) => {
   }
 
   return (
-    <div className="flex-1 h-fit rounded-[16px] bg-[#1C2026] py-[35px] px-[50px] flex flex-col gap-5">
+    <div className="w-full h-fit rounded-[16px] bg-background-secondary flex flex-col gap-5 p-4 md:py-[35px] md:px-[5%] ">
       <h5 className="font-bold text-[20px]">Send token</h5>
       <TokenInput
         selectedToken={selectedToken}
@@ -121,7 +121,7 @@ export const SendCard = (props: SendCardProps) => {
           <Button
             onClick={getButtonDetails().onClick}
             variant={getButtonDetails().variant as ButtonVariant}
-            className="w-full h-[60px]"
+            className="w-full md:h-[65px]"
           >
             {getButtonDetails().title}
           </Button>

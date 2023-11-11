@@ -7,7 +7,7 @@ import TextButton from "../TextButton/TextButton"
 import TokenRow from "./TokenRow/TokenRow"
 import { compareStringsIgnoreCase, getTokenLogoUrl } from "@/utils/utils"
 import { debounce } from "lodash"
-import { useErc20Tokens } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
+import { useErc20Tokens } from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
 import { isAddress } from "ethers"
 import { COMMON_TOKENS } from "@/constants/tokens"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
@@ -26,12 +26,6 @@ const TokensModal = (props: {
   const [inputValue, setInputValue] = useState<string>("")
   const { chain } = useAppChain()
   const [showUnsupportedTokens, setShowUnsupportedTokens] = useState(false)
-
-  // Update displayedTokenList if combinedList (fetched token list) changes
-  useEffect(() => {
-    console.log("This one too")
-    setDisplayedTokenList(Object.values(tokens))
-  }, [tokens])
 
   const filterTokens = debounce((value) => {
     if (!value) {
@@ -59,20 +53,25 @@ const TokensModal = (props: {
     filterTokens(value)
   }
 
+  const onSelectToken = (token: Token) => {
+    props.setSelectedToken(token)
+    props.setIsOpen(false)
+  }
+
+  // Update displayedTokenList if combinedList (fetched token list) changes
+  useEffect(() => {
+    if (!Object.values(tokens).length) return
+    setDisplayedTokenList(Object.values(tokens))
+  }, [tokens])
+
   //Clear search input when modal closes
   useEffect(() => {
-    console.log("Callingg")
     if (!props.isOpen) {
       setInputValue("")
       filterTokens("")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.isOpen])
-
-  const onSelectToken = (token: Token) => {
-    props.setSelectedToken(token)
-    props.setIsOpen(false)
-  }
 
   const supportFilteredTokens = useMemo(
     () =>
@@ -82,29 +81,20 @@ const TokensModal = (props: {
     [displayedTokenList, showUnsupportedTokens]
   )
 
-  console.log("Hereeeeee.......")
-  useEffect(() => {
-    console.log("Moneyyyyyy....")
-  }, [displayedTokenList])
-
-  useEffect(() => {
-    console.log("tokensssss....")
-  }, [tokens])
-
   return (
     <Modal
-      contentClassName="border border-[#ffffff13] overflow-hidden"
+      contentClassName="w-[90%] md:w-auto border border-separator-0 overflow-hidden"
       isOpen={props.isOpen}
       setIsOpen={props.setIsOpen}
     >
       <div className="flex flex-col">
-        <div className="flex justify-between py-[22px] px-5 border-b border-[#FFFFFF33]">
+        <div className="flex justify-between py-[18px] md:py-[22px] px-5 border-b border-separator-2">
           <p>Select a token</p>
           <TextButton onClick={() => props.setIsOpen(false)}>
             <Image src={"/icons/close.svg"} width={24} height={24} alt="" />
           </TextButton>
         </div>
-        <div className="px-5 flex flex-col gap-3 border-b border-[#FFFFFF33] py-5">
+        <div className="px-5 flex flex-col gap-3 border-b border-separator-2 py-5">
           <TextInput
             value={inputValue}
             id="token-input"
@@ -119,7 +109,7 @@ const TokensModal = (props: {
                 <Button
                   key={address}
                   variant="tertiary"
-                  className="flex items-center gap-2 border-[0.5px] border-[#FFFFFF26] !py-[8px] !px-[10px]"
+                  className="flex items-center gap-2 border-[0.5px] bg-transparent border-separator-1 !py-[8px] !px-[10px]"
                   onClick={() => onSelectToken(token)}
                 >
                   <Image

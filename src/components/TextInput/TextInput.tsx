@@ -12,7 +12,7 @@ const TextInput = (props: InputProps) => {
   const { containerClassName, ...rest } = props
   return (
     <div
-      className={`bg-[#101114] pt-4 pb-[27px] px-6 gap-4  rounded-[15px] flex flex-col ${
+      className={`bg-background-primary pt-4 pb-[27px] px-6 gap-4 rounded-[15px] flex flex-col ${
         props.containerClassName || ""
       }`}
     >

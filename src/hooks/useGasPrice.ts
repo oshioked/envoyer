@@ -1,11 +1,12 @@
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
-import { useAccount, useContractRead, useFeeData, usePublicClient } from "wagmi"
+import { useAccount, usePublicClient } from "wagmi"
 import { transferABI } from "./useSendToken"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useTokenPrice } from "./useTokenPrice"
 import { isAddress } from "viem"
 import { ethers } from "ethers"
 import { useRouter } from "next/router"
+import { fetchFeeData } from "wagmi/actions"
 
 const useGasPrice = (
   tokenAddress: string,
@@ -17,8 +18,7 @@ const useGasPrice = (
   const { chain } = useAppChain()
   const router = useRouter()
 
-  const { data: feeData } = useFeeData({ cacheTime: 0, formatUnits: "ether" })
-  const { estimateContractGas, estimateFeesPerGas } = usePublicClient({
+  const { estimateContractGas } = usePublicClient({
     chainId: chain.id,
   })
   const {
@@ -28,6 +28,7 @@ const useGasPrice = (
 
   const [estimatedGas, setEstimatedGas] = useState<string>()
   const [estimatedMaxFeePerGas, setEstimatedMaxFeePerGas] = useState<string>()
+  const [gasPrice, setGasPrice] = useState<string>()
 
   const getFees = useCallback(async () => {
     if (!isAddress(tokenAddress) || !isAddress(toAddress) || !tokenAmt) return
@@ -41,26 +42,27 @@ const useGasPrice = (
         args: [toAddress, parsedTokenAmount],
       }
 
-      //Gas gas details
+      //Get gas required to send tx
       const estimateSendGas = await estimateContractGas({
         ...tx,
         account: address as `0x${string}`,
       })
-      const { maxFeePerGas } = await estimateFeesPerGas()
+      //Get fees
+      const {
+        maxFeePerGas,
+        formatted: { gasPrice },
+      } = await fetchFeeData({
+        formatUnits: "ether",
+      })
 
       setEstimatedGas(estimateSendGas.toString())
       setEstimatedMaxFeePerGas(maxFeePerGas?.toString())
+      setGasPrice(gasPrice?.toString())
     } catch (error) {
+      setEstimatedGas("")
       console.log(error)
     }
-  }, [
-    address,
-    estimateContractGas,
-    estimateFeesPerGas,
-    toAddress,
-    tokenAddress,
-    tokenAmt,
-  ])
+  }, [address, estimateContractGas, toAddress, tokenAddress, tokenAmt])
 
   //Get fees on mount
   useEffect(() => {
@@ -81,9 +83,9 @@ const useGasPrice = (
     () =>
       Number(estimatedGas) *
       priority *
-      Number(feeData?.formatted.gasPrice) *
+      Number(gasPrice) *
       (nativeTokenPriceInUsd || 0),
-    [estimatedGas, feeData?.formatted.gasPrice, nativeTokenPriceInUsd, priority]
+    [estimatedGas, gasPrice, nativeTokenPriceInUsd, priority]
   )
 
   return {

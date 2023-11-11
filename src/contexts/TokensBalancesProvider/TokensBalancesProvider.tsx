@@ -9,59 +9,59 @@ import {
   useState,
 } from "react"
 import { useAppChain } from "../AppChainProvider/AppChainProvider"
-import { weiToEther } from "@/utils/utils"
 import { SUPPORTED_CHAIN } from "@/constants/chains"
-interface ERC20Balance {
+import { weiToEther } from "@/utils/tokens"
+import { fetchBalance } from "wagmi/actions"
+interface TokenBalance {
   tokenAddress: string
   balance: string
   symbol: string
   name: string
   decimals: number
 }
-interface ERC20Balances {
-  [tokenAddress: string]: ERC20Balance
+export interface TokenBalances {
+  [tokenAddress: string]: TokenBalance
 }
 
-interface Erc20TokensBalancesContextProps {
+interface TokensBalancesContextProps {
   isLoading: boolean
   nativeBalance: string
-  walletERC20Balances: ERC20Balances
+  walletTokensBalances: TokenBalances
   refetch: () => void
 }
 
-const Erc20TokensBalancesContext =
-  createContext<Erc20TokensBalancesContextProps>(
-    {} as Erc20TokensBalancesContextProps
-  )
+const TokensBalancesContext = createContext<TokensBalancesContextProps>(
+  {} as TokensBalancesContextProps
+)
 
-const Erc20TokensBalancesProvider = (props: { children: ReactNode }) => {
+const TokensBalancesProvider = (props: { children: ReactNode }) => {
   const { chain } = useAppChain()
   const { address } = useAccount()
 
   const [isLoading, setIsLoading] = useState(false)
   const [nativeBalance, setNativeBalance] = useState("0")
-  const [walletERC20Balances, setWalletERC20Balances] = useState<ERC20Balances>(
-    {}
-  )
+  const [walletTokensBalances, setWalletTokensBalances] =
+    useState<TokenBalances>({})
   const [shouldRefetch, setShouldRefetch] = useState({})
 
-  const getAllErc20TokensInWallet = useCallback(async () => {
+  const getAllTokensInWallet = useCallback(async () => {
     if (!address || !Moralis.Core.isStarted) {
       setNativeBalance("0")
-      setWalletERC20Balances({})
+      setWalletTokensBalances({})
       return
     }
     setIsLoading(true)
     try {
       // Get Native token balance
-      const nativeResponse = await Moralis.EvmApi.balance.getNativeBalance({
+      const nativeBalanceResponse = await fetchBalance({
         address: address || "",
-        chain: chain.id,
+        chainId: chain.id,
+        formatUnits: "ether",
       })
-      const nativeBal = nativeResponse.toJSON().balance
+      const nativeBal = nativeBalanceResponse.value
 
       const nativeCurrency = SUPPORTED_CHAIN[chain.id].nativeCurrency
-      const nativeBalObj: ERC20Balance = {
+      const nativeBalObj: TokenBalance = {
         balance: weiToEther(Number(nativeBal), nativeCurrency.decimals),
         tokenAddress: nativeCurrency.address.toLowerCase(),
         decimals: nativeCurrency.decimals,
@@ -70,27 +70,29 @@ const Erc20TokensBalancesProvider = (props: { children: ReactNode }) => {
       }
 
       // Get rest ERC20 token balances
-      const response = await Moralis.EvmApi.token.getWalletTokenBalances({
-        address: address || "",
-        chain: chain.id,
-      })
-      const result = response.toJSON()
+      const walletErc20BalancesResponse =
+        await Moralis.EvmApi.token.getWalletTokenBalances({
+          address: address || "",
+          chain: chain.id,
+        })
+      const walletErc20Balances = walletErc20BalancesResponse.toJSON()
 
-      const mappedResult: ERC20Balances = result.reduce(
-        (acc: any, value) => {
+      //Map token addresses to balances starting with the native currency
+      const mappedResult: TokenBalances = walletErc20Balances.reduce(
+        (balances: TokenBalances, value) => {
           const tokenAddress = value.token_address
-          acc[tokenAddress.toLowerCase()] = {
+          balances[tokenAddress.toLowerCase()] = {
             tokenAddress: tokenAddress,
             balance: weiToEther(Number(value.balance), value.decimals),
             name: value.name,
             symbol: value.symbol,
             decimals: value.decimals,
           }
-          return acc
+          return balances
         },
         {
           [nativeCurrency.address.toLowerCase()]: nativeBalObj,
-        } as ERC20Balances
+        } as TokenBalances
       )
 
       setNativeBalance(
@@ -100,7 +102,7 @@ const Erc20TokensBalancesProvider = (props: { children: ReactNode }) => {
         )
       )
 
-      setWalletERC20Balances(mappedResult)
+      setWalletTokensBalances(mappedResult)
     } catch (error) {
       console.log(error)
     } finally {
@@ -109,26 +111,30 @@ const Erc20TokensBalancesProvider = (props: { children: ReactNode }) => {
   }, [address, chain])
 
   useEffect(() => {
-    getAllErc20TokensInWallet()
-  }, [getAllErc20TokensInWallet, shouldRefetch])
+    getAllTokensInWallet()
+  }, [getAllTokensInWallet, shouldRefetch])
+
+  const refetch = useCallback(() => {
+    setShouldRefetch({})
+  }, [setShouldRefetch])
 
   return (
-    <Erc20TokensBalancesContext.Provider
+    <TokensBalancesContext.Provider
       value={{
         isLoading,
         nativeBalance,
-        walletERC20Balances,
-        refetch: () => setShouldRefetch({}),
+        walletTokensBalances,
+        refetch,
       }}
     >
       {props.children}
-    </Erc20TokensBalancesContext.Provider>
+    </TokensBalancesContext.Provider>
   )
 }
 
 export const useWalletTokensBalances = () => {
-  const value = useContext(Erc20TokensBalancesContext)
+  const value = useContext(TokensBalancesContext)
   return value
 }
 
-export default Erc20TokensBalancesProvider
+export default TokensBalancesProvider

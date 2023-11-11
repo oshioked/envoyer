@@ -3,23 +3,14 @@ import moment from "moment"
 export const formatIpfsImage = (url: string) =>
   url.includes("ipfs") ? url.replace("ipfs://", "https://ipfs.io/ipfs/") : url
 
+export const getTokenLogoUrl = (url: string) =>
+  url ? (url.includes("ipfs") ? formatIpfsImage(url) : url) : ""
+
 export const formatAddress = (address: string) =>
   `${address.slice(0, 4)}....${address.slice(
     address.length - 4,
     address.length
   )}`
-
-export const weiToEther = (
-  weiAmount: number,
-  decimal: number = 18,
-  dp: number = 4
-) => {
-  if (!weiAmount) return "0"
-  const divider = 10 ** decimal
-  const etherAmount = Number(weiAmount / divider)
-
-  return etherAmount.toFixed(dp)
-}
 
 export const compareStringsIgnoreCase = (str1: string, str2: string) => {
   const lowerStr1 = str1.toLowerCase()
@@ -47,5 +38,6 @@ export const formatShortDate = (date: Date) => {
   }
 }
 
-export const getTokenLogoUrl = (url: string) =>
-  url ? (url.includes("ipfs") ? formatIpfsImage(url) : url) : ""
+export const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}

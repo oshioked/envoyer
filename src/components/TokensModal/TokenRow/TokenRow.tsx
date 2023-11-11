@@ -10,7 +10,7 @@ interface TokenRowProps {
 }
 const TokenRow = (props: TokenRowProps) => {
   const selectedClassNames = "opacity-50"
-  const activeClassNames = "transition duration-400 hover:bg-[#101114]"
+  const activeClassNames = "transition duration-400 hover:bg-background-primary"
   return (
     <div
       onClick={() => props.onSelectToken()}
@@ -20,10 +20,10 @@ const TokenRow = (props: TokenRowProps) => {
     >
       <div className="flex gap-3 items-center">
         <Image
-          className="w-[36px] h-[36px] rounded-full border border-[#FFFFFF26]"
+          className="w-[32px] h-[32px] rounded-full border border-separator-1"
           src={props.img}
-          width={34}
-          height={34}
+          width={32}
+          height={32}
           alt=""
         />
         <div>

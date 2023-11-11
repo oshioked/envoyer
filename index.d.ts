@@ -10,8 +10,6 @@ type Token = {
   hidden?: booolean
 }
 
-// type Token = any
-
 declare global {
   interface Window {
     ethereum: import("ethers").providers.ExternalProvider

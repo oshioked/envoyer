@@ -8,38 +8,24 @@ import {
   darkTheme,
 } from "@rainbow-me/rainbowkit"
 import { configureChains, createConfig, WagmiConfig } from "wagmi"
-import { mainnet, polygon, optimism, arbitrum, base, zora } from "wagmi/chains"
+import { mainnet, polygon, arbitrum, zora } from "wagmi/chains"
 import { publicProvider } from "wagmi/providers/public"
 import Moralis from "moralis"
 import { useEffect } from "react"
 import { merge } from "lodash"
-import { ERC20TokensProvider } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
 import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import "react-loading-skeleton/dist/skeleton.css"
 import AppChainProvider from "@/contexts/AppChainProvider/AppChainProvider"
-import Erc20TokensBalancesProvider from "@/contexts/Erc20TokensBalancesProvider/Erc20TokensBalancesProvider"
+import TokensBalancesProvider from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
 import { SkeletonTheme } from "react-loading-skeleton"
 import ActivityProvider from "@/contexts/ActivityProvider/ActivityProvider"
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc"
+import SettingsProvider from "@/contexts/SettingsProvider/SettingsProvider"
+import ERC20TokensListProvider from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [
-    polygon,
-    mainnet,
-    // optimism,
-    arbitrum,
-    //  base, zora
-  ],
-  [
-    publicProvider(),
-    jsonRpcProvider({
-      rpc: () => ({
-        http: `https://rpc.chiadochain.net`,
-        webSocket: `wss://rpc.chiadochain.net/wss`,
-      }),
-    }),
-  ]
+  [polygon, mainnet, arbitrum],
+  [publicProvider()]
 )
 
 const { connectors } = getDefaultWallets({
@@ -57,13 +43,10 @@ const wagmiConfig = createConfig({
 
 const initializeMoralis = async () => {
   try {
-    console.log("Initializing moralis")
     if (!Moralis.Core.isStarted) {
       await Moralis.start({
         apiKey: process.env.NEXT_PUBLIC_MORALIS_API_KEY,
-        // ...and any other configuration
       })
-      console.log("Moralis initialized")
     }
   } catch (error) {
     console.log("Failed to initialize moralis", error)
@@ -87,16 +70,18 @@ export default function App({ Component, pageProps }: AppProps) {
     <SkeletonTheme baseColor="#252A32" highlightColor="#37393F">
       <WagmiConfig config={wagmiConfig}>
         <AppChainProvider>
-          <Erc20TokensBalancesProvider>
-            <ERC20TokensProvider>
-              <ActivityProvider>
-                <RainbowKitProvider theme={myTheme} chains={chains}>
-                  <ToastContainer theme="dark" />
-                  <Component {...pageProps} />
-                </RainbowKitProvider>
-              </ActivityProvider>
-            </ERC20TokensProvider>
-          </Erc20TokensBalancesProvider>
+          <SettingsProvider>
+            <TokensBalancesProvider>
+              <ERC20TokensListProvider>
+                <ActivityProvider>
+                  <RainbowKitProvider theme={myTheme} chains={chains}>
+                    <ToastContainer theme="dark" />
+                    <Component {...pageProps} />
+                  </RainbowKitProvider>
+                </ActivityProvider>
+              </ERC20TokensListProvider>
+            </TokensBalancesProvider>
+          </SettingsProvider>
         </AppChainProvider>
       </WagmiConfig>
     </SkeletonTheme>

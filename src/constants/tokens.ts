@@ -36,3 +36,8 @@ export const COMMON_TOKENS: {
     FET: "0x7583FEDDbceFA813dc18259940F76a02710A8905",
   },
 }
+
+//TOKENS LIST
+export const UNISWAP_TOKEN_LIST =
+  "https://gateway.ipfs.io/ipns/tokens.uniswap.org"
+export const KLEROS_LIST = "https://t2crtokens.eth.link/"

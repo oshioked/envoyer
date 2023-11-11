@@ -13,10 +13,10 @@ interface ButtonProps
 const Button = (props: ButtonProps) => {
   const { variant, ...rest } = props
   const className = {
-    primary: "text-black bg-[#67FCC3]",
-    secondary: "text-[#67FCC3] bg-[#375449]",
-    tertiary: "text-[#FFFFFFDE] bg-[#1C2026]",
-    disabled: "text-[#ffffff50] bg-[#131417]",
+    primary: "text-black bg-accent-primary",
+    secondary: "text-accent-primary bg-accent-foreground",
+    tertiary: "text-label-1 bg-background-secondary",
+    disabled: "text-label-3 bg-background-primary",
   }
 
   return (

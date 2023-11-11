@@ -17,16 +17,16 @@ const ChainModal = () => {
   } = useAppChain()
 
   const selectedClassNames = "opacity-50"
-  const activeClassNames = "transition duration-400 hover:bg-[#101114]"
+  const activeClassNames = "transition duration-400 hover:bg-background-primary"
 
   return (
     <Modal
-      contentClassName="w-[322px] p-[10px] border border-[#FFFFFF33]"
+      contentClassName="w-[85%] md:w-[322px] p-[10px] border border-separator-1"
       isOpen={isChainModalVisible}
       setIsOpen={setIsChainModalVisible}
     >
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between py-[20px] px-[10px] border-b border-[#FFFFFF33]">
+        <div className="flex justify-between py-[20px] px-[10px] border-b border-separator-2">
           <p>Select a network</p>
           <TextButton onClick={() => setIsChainModalVisible(false)}>
             <Image src={"/icons/close.svg"} width={24} height={24} alt="" />
@@ -46,7 +46,7 @@ const ChainModal = () => {
             >
               <div className="flex gap-3 items-center">
                 <Image
-                  className="w-[28px] h-[28px] rounded-full border border-[#FFFFFF26]"
+                  className="w-[28px] h-[28px] rounded-full border border-separator-1"
                   src={network.iconUrl}
                   width={28}
                   height={28}

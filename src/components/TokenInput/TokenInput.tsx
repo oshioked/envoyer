@@ -1,7 +1,7 @@
 import React, { ChangeEventHandler } from "react"
 import Button from "../Button/Button"
 import Image from "next/image"
-import { useErc20Tokens } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
+import { useErc20Tokens } from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
 import { formatIpfsImage } from "@/utils/utils"
 import Skeleton from "react-loading-skeleton"
 import { useAccount } from "wagmi"
@@ -34,13 +34,13 @@ const TokenInput = (props: TokenInputProps) => {
     tokens[selectedToken.address.toLowerCase()]?.balance
 
   return (
-    <div className="bg-[#101114] pt-4 pb-[27px] px-6 gap-4 rounded-[15px] flex justify-between h-[130px]">
+    <div className="bg-background-primary pt-4 pb-[27px] px-6 gap-4 rounded-[15px] flex justify-between h-[130px]">
       <div className="flex flex-col gap-1 flex-1 ">
         <label>Amount</label>
         <input
           type="number"
           value={amount}
-          onChange={(event) => onAmountChange(Number(event.target.value))}
+          onChange={(event: any) => onAmountChange(event.target.value)}
           className="bg-transparent text-4xl w-full outline-none"
           placeholder="0"
         />
@@ -50,7 +50,7 @@ const TokenInput = (props: TokenInputProps) => {
           </span>
         ) : tokenPriceInUsd && Boolean(tokenPriceInUsd) ? (
           <p className="text-sm opacity-30">
-            ${(amount * tokenPriceInUsd).toFixed(2)}
+            ≈${(amount * tokenPriceInUsd).toFixed(2)}
           </p>
         ) : null}
       </div>
@@ -71,22 +71,27 @@ const TokenInput = (props: TokenInputProps) => {
           <Image src={"/icons/chevDown.svg"} width={13} height={13} alt="" />
         </Button>
         {isConnected && (
-          <div
-            onClick={() =>
-              !isLoadingBalance && selectedTokenUpdatedBalance
-                ? onAmountChange(Number(selectedTokenUpdatedBalance))
-                : null
-            }
-            className="flex gap-1 justify-end cursor-pointer"
-          >
-            <Image src={"/icons/wallet.svg"} width={20} height={20} alt="" />
-            {isLoadingBalance ? (
-              <div className="h-13 w-[50px]">
-                <Skeleton />
-              </div>
-            ) : (
-              <p className="opacity-70">{selectedTokenUpdatedBalance || 0}</p>
-            )}
+          <div className="flex flex-col items-end">
+            <p className="text-xs text-label-3">Bal:</p>
+            <div
+              onClick={() =>
+                !isLoadingBalance && selectedTokenUpdatedBalance
+                  ? onAmountChange(Number(selectedTokenUpdatedBalance))
+                  : null
+              }
+              className="flex gap-1 justify-end cursor-pointer"
+            >
+              <Image src={"/icons/wallet.svg"} width={20} height={20} alt="" />
+              {isLoadingBalance ? (
+                <div className="h-13 w-[50px]">
+                  <Skeleton />
+                </div>
+              ) : (
+                <p className="text-sm opacity-70">
+                  {selectedTokenUpdatedBalance || 0}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

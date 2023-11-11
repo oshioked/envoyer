@@ -9,7 +9,6 @@ export const getCachedData = (key: string, cacheTime: number) => {
     cacheTimestamp &&
     currentTime - Number(cacheTimestamp) <= cacheTime
   ) {
-    console.log(`Getting ${key} from cache`)
     // Data is still within the cache time, use the cached data.
     return cachedData
   }

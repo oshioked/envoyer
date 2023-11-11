@@ -19,10 +19,10 @@ const ToggleButton = (props: {
           checked={isOn}
           onChange={toggleSwitch}
         />
-        <div className="block bg-gray-600 w-10 h-5 rounded-full" />
+        <div className="block bg-background-tertiary w-10 h-5 rounded-full" />
         <div
           className={`absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform duration-300 transform ${
-            isOn ? "translate-x-5 bg-[#6FEABB]" : ""
+            isOn ? "translate-x-5 !bg-accent-primary" : ""
           }`}
         />
       </div>

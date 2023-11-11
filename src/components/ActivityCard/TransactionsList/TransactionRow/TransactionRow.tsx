@@ -3,12 +3,8 @@ import {
   SendData,
   SendStatus,
 } from "@/contexts/ActivityProvider/ActivityProvider"
-import {
-  formatAddress,
-  formatIpfsImage,
-  formatShortDate,
-  weiToEther,
-} from "@/utils/utils"
+import { weiToEther } from "@/utils/tokens"
+import { formatAddress, formatIpfsImage, formatShortDate } from "@/utils/utils"
 import Image from "next/image"
 import React from "react"
 import Skeleton from "react-loading-skeleton"
@@ -30,7 +26,7 @@ const TransactionRow = (props: {
       onClick={() => onTransactionClick(send.txHash)}
       className={`flex justify-between items-center p-4 ${
         listIndex !== 0 ? "border-t" : ""
-      } border-[#FFFFFF33] transition-colors hover:bg-[#101114] cursor-pointer`}
+      } border-separator-2 transition-colors md:hover:bg-background-primary cursor-pointer`}
     >
       <div className="flex items-center gap-2">
         <Image
@@ -63,7 +59,7 @@ export const TransactionRowLoading = (props: { listIndex: number }) => {
     <div
       className={`flex justify-between items-center p-4 ${
         listIndex !== 0 ? "border-t" : ""
-      } border-[#ffffff13]`}
+      } border-separator-0`}
     >
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 mt-[-4px]">

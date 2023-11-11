@@ -1,8 +1,6 @@
 import React from "react"
 
-interface CustomButtonProps {
-  textColor?: "green" | "red" | "orange" | "blue" | "gray"
-}
+interface CustomButtonProps {}
 
 interface TextButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -13,10 +11,9 @@ const TextButton = (props: TextButtonProps) => {
   return (
     <button
       {...rest}
-      className={`inline-flex whitespace-nowrap font-medium ${
-        // props.textColor ? colors[props.textColor] : colors.red
-        "text-[#67FCC3]"
-      }  ${props.className || ""}`}
+      className={`inline-flex whitespace-nowrap font-medium ${"text-accent-primary"}  ${
+        props.className || ""
+      }`}
     >
       {props.children}
     </button>

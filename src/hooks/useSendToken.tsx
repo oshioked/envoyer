@@ -1,13 +1,17 @@
 import { SEND_STATUS } from "@/constants/send"
 import { usePendingSends } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
-import { useState } from "react"
 import { isHash, isAddress } from "viem"
+import { useAccount } from "wagmi"
 import {
   fetchTransaction,
+  prepareSendTransaction,
+  prepareWriteContract,
+  sendTransaction,
   waitForTransaction,
   writeContract,
 } from "wagmi/actions"
+import useLocalStorageState from "./useLocalStorageState"
 
 export const transferABI = [
   {
@@ -29,76 +33,80 @@ export const transferABI = [
   },
 ]
 
-export const useSendToken = (
-  props: {
-    onSubmitted?: Function
-    onSubmitFailed?: Function
-    gas?: bigint
-    maxFeePerGas?: bigint
-  } = {}
-) => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
-  const [success, setSuccess] = useState<boolean | null>(null)
-  const [error, setError] = useState("")
+export const useSendToken = () => {
+  const [isLoading, setIsLoading] = useLocalStorageState(
+    "isSubmittingSend",
+    true
+  )
+  const [confirmed, setConfirmed] = useLocalStorageState(
+    "isSendConfirmed",
+    false
+  )
+  const [error, setError] = useLocalStorageState("sendError", "")
+
+  const { address } = useAccount()
 
   const { chain } = useAppChain()
+  const nativeCurrencyAddress = chain.nativeCurrency.address
 
   const reset = () => {
     setIsLoading(false)
     setConfirmed(false)
-    setSuccess(null)
     setError("")
   }
-  const { addNewPendingSend } = usePendingSends()
 
-  const sendToken = async (
-    tokenAddress: `0x${string}`,
-    amount: bigint,
-    to: `0x${string}`,
-    tokenSymbol: string,
+  const sendToken = async (props: {
+    tokenAddress: `0x${string}`
+    amount: bigint
+    toAddress: `0x${string}`
     nonce?: number
-  ) => {
+    gas?: bigint
+    maxFeePerGas?: bigint
+    onSubmitted?: Function
+    onSubmitFailed?: Function
+  }) => {
+    if (!address) return
     setError("")
     setConfirmed(false)
-    setSuccess(null)
     setIsLoading(true)
 
-    console.log("Send token called")
+    const { toAddress, tokenAddress, amount } = props
 
     try {
-      const { hash } = await writeContract({
-        address: tokenAddress,
-        abi: transferABI,
-        functionName: "transfer",
-        args: [to, amount],
-        gas: props.gas,
-        maxFeePerGas: props.maxFeePerGas,
-        nonce,
-      })
+      let txHash = ""
+      if (tokenAddress === nativeCurrencyAddress) {
+        const nativeSendConfig = {
+          from: address,
+          to: toAddress,
+          value: amount,
+          gas: props.gas,
+          maxFeePerGas: props.maxFeePerGas,
+        }
 
-      if (props.onSubmitted) {
-        console.log("calling on submitted")
-        props.onSubmitted()
+        const config = await prepareSendTransaction(nativeSendConfig)
+        console.log({ config, nativeSendConfig })
+        const { hash } = await sendTransaction(config)
+        txHash = hash
+      } else {
+        const erc20Config = {
+          address: tokenAddress,
+          abi: transferABI,
+          functionName: "transfer",
+          args: [toAddress, amount],
+          gas: props.gas,
+          maxFeePerGas: props.maxFeePerGas,
+        }
+        const config = await prepareWriteContract(erc20Config)
+        const { hash } = await writeContract(config)
+        txHash = hash
       }
 
-      //Add to pending transactions
-      addNewPendingSend({
-        txHash: hash,
-        tokenAmt: amount.toString(),
-        to,
-        tokenAddress,
-        tokenSymbol,
-        status: SEND_STATUS.processing,
-        time: new Date(Date.now()).toString(),
-        chainId: chain.id,
-      })
+      if (props.onSubmitted) {
+        props.onSubmitted(txHash)
+      }
 
       setConfirmed(true)
-      console.log("Just set confirmed")
     } catch (error: any) {
-      console.log(error)
-      //TODO - Give clear error messages
       if (error.message.includes("ERC20: transfer amount exceeds balance")) {
         setError("Insufficient wallet balance")
       } else if (error.message.includes("User rejected the request")) {
@@ -107,57 +115,69 @@ export const useSendToken = (
         setError("Block not found. Try again!")
       } else {
         setError("Failed to submit transaction")
-        console.log(error, "Error sending tokens")
       }
+      console.log(error)
       setTimeout(() => {
         if (props.onSubmitFailed) {
           props.onSubmitFailed()
         }
-      }, 2000) //Delay 3secs so user sees the message
+      }, 3000) //Delay 3secs so user sees the message
     } finally {
       setIsLoading(false)
     }
   }
 
-  console.log({ confirmed, success })
-
-  const speedUpSend = async (
-    txHash: string,
-    tokenAddress: string,
-    toAddress: string,
-    tokenAmt: string,
-    speedUpRate: number = 1.15
-  ) => {
+  const speedUpSend = async (props: {
+    txHash: string
+    tokenAddress: string
+    toAddress: `0x${string}`
+    tokenAmt: bigint
+    speedUpRate?: number
+    nonce?: number
+  }) => {
+    const {
+      txHash,
+      tokenAddress,
+      toAddress,
+      tokenAmt,
+      speedUpRate = 1.15,
+    } = props
+    console.log("Calling speed send")
     if (!isHash(txHash) || !isAddress(tokenAddress)) {
       return
     }
+
     try {
-      //Check transaction status and get nonce
-      const { nonce, gas, maxFeePerGas, ...rest } = await fetchTransaction({
-        hash: txHash,
-      })
+      let txNonce = props.nonce
+      if (!txNonce) {
+        //Check transaction status and get nonce
+        const { nonce: fetchedNonce } = await fetchTransaction({
+          hash: txHash,
+        })
+        txNonce = fetchedNonce
+      }
 
-      console.log({ nonce, gas, maxFeePerGas, ...rest })
       //send new transaction again with the same nonce and higher maxFeePerGas
-      const { hash } = await writeContract({
-        address: tokenAddress,
-        abi: transferABI,
-        functionName: "transfer",
-        args: [toAddress, tokenAmt],
-        gas: gas,
-        maxFeePerGas: BigInt(Number(maxFeePerGas) * speedUpRate),
-        nonce,
+      await sendToken({
+        tokenAddress,
+        amount: tokenAmt,
+        toAddress,
+        nonce: txNonce,
+        // gas: BigInt(Math.ceil(Number(gas) * speedUpRate)), //TODO - Pass in the latest gas fees as prop;
+        // maxFeePerGas: BigInt(Math.ceil(Number(maxFeePerGas) * speedUpRate)),
+        onSubmitted: () => {},
       })
 
-      const txDetails = await waitForTransaction({ hash })
-    } catch (error) {}
+      // Replace transaction in pending task Array
+    } catch (error) {
+      console.log(error)
+    }
   }
   return {
     sendToken,
     speedUpSend,
     reset,
     isLoading,
-    success,
     error,
     confirmed,
   }

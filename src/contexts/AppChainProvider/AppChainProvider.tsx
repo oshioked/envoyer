@@ -1,4 +1,4 @@
-import { DEFAULT_CHAIN_ID, SUPPORTED_CHAIN } from "@/constants/chains"
+import { AppChain, DEFAULT_CHAIN_ID, SUPPORTED_CHAIN } from "@/constants/chains"
 import React, {
   useEffect,
   useState,
@@ -10,7 +10,7 @@ import { useNetwork, useSwitchNetwork } from "wagmi"
 import useLocalStorageState from "../../hooks/useLocalStorageState"
 
 interface AppChainContextProps {
-  chain: any //TODO Replace with chain type
+  chain: AppChain
   isSupportedChainConnected: boolean
   isChainModalVisible: boolean
   pendingChainId: number | undefined
@@ -78,7 +78,7 @@ const AppChainProvider = (props: { children: ReactNode }) => {
         pendingChainId,
         status,
         isSupportedChainConnected: connectedChain?.id
-          ? SUPPORTED_CHAIN[connectedChain?.id]
+          ? Boolean(SUPPORTED_CHAIN[connectedChain?.id])
           : false,
         switchSelectedChain,
         setIsChainModalVisible,

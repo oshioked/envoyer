@@ -1,10 +1,11 @@
-import { useErc20Tokens } from "@/contexts/Erc20TokensProvider/Erc20TokensProvider"
+import { useErc20Tokens } from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
 import { usePendingSends } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
 import { useRecentSends } from "@/contexts/ActivityProvider/RecentSendsProvider/RecentSendsProvider"
 import React, { useMemo } from "react"
 import TransactionRow, {
   TransactionRowLoading,
 } from "./TransactionRow/TransactionRow"
+import { SendData } from "@/contexts/ActivityProvider/ActivityProvider"
 const TransactionsList = (props: {
   onTransactionClick: (txHash: string) => void
 }) => {
@@ -13,7 +14,26 @@ const TransactionsList = (props: {
   const { recentSends, isLoading: isLoadingRecentSends } = useRecentSends()
 
   const combinedSends = useMemo(() => {
-    return [...pendingSends, ...recentSends]
+    // Remove duplicate tokens based on their addresses and chains
+    const uniqueSends = [...pendingSends, ...recentSends].reduce(
+      (result, send) => {
+        const isDuplicate = result.find(
+          (s: SendData) =>
+            s.txHash === send.txHash && s.chainId === send.chainId
+        )
+        if (!isDuplicate) {
+          result.push(send)
+        }
+        return result
+      },
+      [] as SendData[]
+    )
+
+    //Sort them with time
+    const sortedSends = uniqueSends.sort(
+      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+    )
+    return sortedSends
   }, [pendingSends, recentSends])
 
   return (

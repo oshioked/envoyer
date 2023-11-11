@@ -7,13 +7,14 @@ import React, {
   useMemo,
 } from "react"
 import { toast } from "react-toastify"
-import { waitForTransaction } from "wagmi/actions"
 import { useRecentSends } from "../RecentSendsProvider/RecentSendsProvider"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
-import { formatAddress, weiToEther } from "@/utils/utils"
-import { SendData } from "../ActivityProvider"
+import { formatAddress } from "@/utils/utils"
+import { SendData, SendStatus } from "../ActivityProvider"
 import { SEND_STATUS } from "@/constants/send"
-import { useWalletTokensBalances } from "@/contexts/Erc20TokensBalancesProvider/Erc20TokensBalancesProvider"
+import { useWalletTokensBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
+import { processPendingTransactions } from "@/utils/transactions"
+import { weiToEther } from "@/utils/tokens"
 
 interface PendingSendsContextProps {
   addNewPendingSend: (send: SendData) => void
@@ -38,89 +39,97 @@ const PendingSendsProvider = (props: { children: ReactNode }) => {
   const addNewPendingSend = (send: SendData) => {
     setPendingSends({
       ...pendingSends,
-      [send.chainId]: { [send.txHash]: send },
+      [send.chainId]: { ...pendingSends[send.chainId], [send.txHash]: send },
     })
   }
 
   //Listens for pending transactions, wait for them and notify user
   useEffect(() => {
+    const moveToRecentSends = (send: SendData, status: SendStatus) => {
+      //Add to recent sends with success status
+      addToRecentSends(
+        {
+          ...pendingSends[send.chainId][send.txHash],
+          status: status,
+        },
+        send.chainId
+      )
+
+      //Remove send from pending sends
+      const newPendingSend = { ...pendingSends[send.chainId] }
+      delete newPendingSend[send.txHash]
+      setPendingSends({
+        ...pendingSends,
+        [send.chainId]: newPendingSend,
+      })
+    }
+
+    //Wait for all pending sends
     const getPendingTxsDetails = async () => {
       const pendingSendsArray = Object.values(
         pendingSends[connectedChain.id] || {}
       )
       if (!pendingSendsArray.length) return
 
-      //Wait for all pending sends
-      for (let send of pendingSendsArray) {
-        if (send.chainId !== connectedChain.id) return
-        try {
-          const data = await waitForTransaction({
-            hash: send.txHash as `0x${string}`,
-            confirmations: 5,
-          })
-
-          if (data.status === "success") {
-            // Show success toast
-            if (!toast.isActive(send.txHash)) {
-              toast.success(
-                `Sent ${weiToEther(Number(send.tokenAmt))} ${
-                  send.tokenSymbol
-                }  to ${formatAddress(send.to)}`,
-                {
-                  toastId: send.txHash,
-                }
-              )
-            }
-
-            //Refetch wallet balances
-            refetchBalances()
-
-            //Add to recent sends with success status
-            addToRecentSends(
+      await processPendingTransactions(pendingSendsArray, {
+        chainId: connectedChain.id,
+        onSendSuccess: (send: SendData) => {
+          //Show success toast notification
+          if (!toast.isActive(send.txHash)) {
+            toast.success(
+              `Sent ${weiToEther(Number(send.tokenAmt))} ${
+                send.tokenSymbol
+              }  to ${formatAddress(send.to)}`,
               {
-                ...pendingSends[send.chainId][send.txHash],
-                status: SEND_STATUS.success,
-              },
-              send.chainId
-            )
-          } else {
-            // Show error toast
-            if (!toast.isActive(send.txHash)) {
-              toast.error(
-                `Failed to send ${weiToEther(Number(send.tokenAmt))} ${
-                  send.tokenSymbol
-                }  to ${formatAddress(send.to)}`,
-                {
-                  toastId: send.txHash,
-                }
-              )
-            }
-
-            //TODO - If this causes a problem, just don't add to recent send and show only toast
-            //Add to recent sends with status failed
-            addToRecentSends(
-              {
-                ...pendingSends[send.chainId][send.txHash],
-                status: SEND_STATUS.failed,
-              },
-              connectedChain.id
+                toastId: send.txHash,
+              }
             )
           }
-        } catch (error) {
-          console.log("Failed to wait for tx", error)
-        } finally {
-          //Remove send from pending sends
-          const newPendingSend = { ...pendingSends[send.chainId] }
-          delete newPendingSend[send.txHash]
-          setPendingSends({ ...pendingSends, [send.chainId]: newPendingSend })
-        }
-      }
+          refetchBalances() //Refetch wallet balances
+          moveToRecentSends(send, SEND_STATUS.success)
+        },
+        onSendFailed: (send: SendData) => {
+          // Show error toast notification
+          if (!toast.isActive(send.txHash)) {
+            toast.error(
+              `Failed to send ${weiToEther(Number(send.tokenAmt))} ${
+                send.tokenSymbol
+              }  to ${formatAddress(send.to)}`,
+              {
+                toastId: send.txHash,
+              }
+            )
+          }
+          moveToRecentSends(send, SEND_STATUS.failed)
+        },
+        onTimeout: () => {},
+        halfwayCallback: (send: SendData) => {
+          //TODO - Decide whether to show a half way notification
+          //   if (!toast.isActive(send.txHash)) {
+          //     toast.info(
+          //       `Sending ${weiToEther(Number(send.tokenAmt))} ${
+          //         send.tokenSymbol
+          //       }  to ${formatAddress(
+          //         send.to
+          //       )} taking long. Speed up transaction`,
+          //       {
+          //         toastId: send.txHash,
+          //       }
+          //     )
+          //   }
+        },
+      })
     }
 
     getPendingTxsDetails()
-  }, [pendingSends, setPendingSends, addToRecentSends, connectedChain.id])
+  }, [
+    connectedChain.id,
+    pendingSends,
+    addToRecentSends,
+    setPendingSends,
+    refetchBalances,
+  ])
 
-  //TODO - See if you can change pending sends type to an array so there'll be no need for this
   const pendingSendsArray = useMemo(() => {
     const result = Object.values(pendingSends[connectedChain.id] || {})
     return result

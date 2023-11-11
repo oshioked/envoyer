@@ -5,13 +5,17 @@ import { useAccount } from "wagmi"
 import Image from "next/image"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { SendData } from "@/contexts/ActivityProvider/ActivityProvider"
+import useLocalStorageState from "@/hooks/useLocalStorageState"
 
-export const ActivityCard = () => {
-  const [cardState, setCardState] = useState<
+export const ActivityCard = (props: {
+  populateSendForm: (send: SendData) => void
+}) => {
+  const [cardState, setCardState] = useLocalStorageState<
     "transactions" | "transaction-details"
-  >("transactions")
+  >("activityCardState", "transactions")
 
-  const [selectedSendTxHash, setSelectedSendTxHash] = useState<string>()
+  const [selectedSendTxHash, setSelectedSendTxHash] =
+    useLocalStorageState<string>("selectedActivityHash", "")
 
   const { isConnected } = useAccount()
   const { chain } = useAppChain()
@@ -27,7 +31,7 @@ export const ActivityCard = () => {
   }
 
   return (
-    <div className="w-full flex">
+    <div className="w-full flex flex-1">
       {!isConnected ? (
         <div className="flex flex-col gap-2 items-center justify-center flex-1 w-full">
           <Image
@@ -45,6 +49,7 @@ export const ActivityCard = () => {
         <TransactionsList onTransactionClick={onTransactionClick} />
       ) : (
         <TransactionDetails
+          populateSend={props.populateSendForm}
           selectedSendTxHash={selectedSendTxHash}
           onBack={() => setCardState("transactions")}
         />

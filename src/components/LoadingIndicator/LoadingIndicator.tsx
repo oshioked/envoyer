@@ -35,11 +35,11 @@ function LoadingIndicator(props: {
       }`}
     >
       {displaySpinner && (
-        <div className="w-full h-full border-t-4 border-[#67FCC3] border-solid rounded-full animate-spin inset-0" />
+        <div className="w-full h-full border-t-4 border-accent-primary border-solid rounded-full animate-spin inset-0" />
       )}
       {displayCheckmark && (
         <div className=" inset-0 flex items-center justify-center">
-          <div className="text-[#67FCC3]">
+          <div className="text-accent-primary">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -59,7 +59,7 @@ function LoadingIndicator(props: {
       )}
       {displayErrorX && (
         <div className="w-full h-full inset-0 flex items-center justify-center">
-          <div className="h-full text-red-500">
+          <div className="h-full text-status-error">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"

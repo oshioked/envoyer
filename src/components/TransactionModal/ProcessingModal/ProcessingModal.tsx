@@ -1,8 +1,10 @@
 import Button from "@/components/Button/Button"
 import LoadingIndicator from "@/components/LoadingIndicator/LoadingIndicator"
+import { usePendingSends } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
+import { useRecentSends } from "@/contexts/ActivityProvider/RecentSendsProvider/RecentSendsProvider"
 import { formatAddress } from "@/utils/utils"
 import Image from "next/image"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 interface ProcessingModalProps {
   tokenSymbol: string
@@ -14,18 +16,19 @@ interface ProcessingModalProps {
   success: boolean
   error: string
   onClose: Function
+  txHash: string | null
 }
 export const ProcessingModal = (props: ProcessingModalProps) => {
   const {
     isProcessing,
     confirmed,
-    success,
     error,
     onClose,
     tokenSymbol,
     tokenURI,
     amount,
     toAddress,
+    txHash,
   } = props
 
   const [displayedDetails, setDisplayedDetails] = useState({
@@ -35,10 +38,22 @@ export const ProcessingModal = (props: ProcessingModalProps) => {
     toAddress,
   }) //Save these as initial state so when they reset on submitted the state remains
 
+  const [success, setSuccess] = useState(false)
+  const { recentSends } = useRecentSends()
+
+  // const { speedUpSend } = useSendToken()
+
+  useEffect(() => {
+    //Check if in txHash in recent send
+    const existing = recentSends.find((send) => send.txHash === txHash)
+    if (existing) {
+      setSuccess(true)
+    }
+  }, [recentSends, txHash])
+
   return (
     <>
-      <div className="flex justify-between pb-[20px] border-b border-[#FFFFFF33]">
-        {/* <h3 className="text-lg font-bold opacity-75">Confirm send</h3> */}
+      <div className="flex justify-between pb-[20px] border-b border-separator-2">
         <div />
         <div
           onClick={() => onClose()}
@@ -81,7 +96,7 @@ export const ProcessingModal = (props: ProcessingModalProps) => {
           />
         </div>
         <Button className="w-full cursor-default" variant="disabled">
-          {success || false //TODO - Check just confirmed send state for tx hash and show send if it's found
+          {success
             ? "Sent successfully"
             : error
             ? error

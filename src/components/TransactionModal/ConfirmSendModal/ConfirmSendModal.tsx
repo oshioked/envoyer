@@ -1,9 +1,12 @@
 import Button from "@/components/Button/Button"
+import GasOptionButton from "@/components/GasPriorityButton/GasPriorityButton"
+import Message from "@/components/MessageTag/MessageTag"
 import { GAS_OPTION_DEFAULT, GasOptionKey } from "@/constants/gas"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { formatAddress } from "@/utils/utils"
 import Image from "next/image"
 import React from "react"
+import { Tooltip } from "react-tooltip"
 
 const ConfirmSendModal = (props: {
   amount: number
@@ -12,6 +15,7 @@ const ConfirmSendModal = (props: {
   tokenSymbol: string
   gasPriceInUsd: number
   selectedGasOption: GasOptionKey
+  isNotSupported: boolean
   setSelectedGasOption: Function
   setIsOpen: (isOpen: boolean) => void
   onConfirmSend: Function
@@ -22,6 +26,7 @@ const ConfirmSendModal = (props: {
     tokenURI,
     gasPriceInUsd,
     toAddress,
+    isNotSupported,
     selectedGasOption,
     setSelectedGasOption,
     setIsOpen,
@@ -32,7 +37,7 @@ const ConfirmSendModal = (props: {
 
   return (
     <>
-      <div className="flex justify-between pb-[20px] border-b border-[#FFFFFF33]">
+      <div className="flex justify-between pb-[20px] border-b border-separator-2">
         <h3 className="text-lg font-bold opacity-75">Confirm send</h3>
         <div
           onClick={() => setIsOpen(false)}
@@ -42,7 +47,7 @@ const ConfirmSendModal = (props: {
         </div>
       </div>
 
-      <div className="flex justify-between items-center pb-[20px] border-b border-[#FFFFFF33]">
+      <div className="flex justify-between items-center pb-[20px] border-b border-separator-2">
         <div className="flex flex-col gap-2">
           <p className="text-xs opacity-50">SEND {tokenSymbol}</p>
           <div className="flex items-center gap-[8px]">
@@ -78,34 +83,49 @@ const ConfirmSendModal = (props: {
         </div>
         <div className="flex justify-between items-center">
           <p className="opacity-50">Network fee</p>
-          <p>
-            {gasPriceInUsd && !isNaN(gasPriceInUsd)
-              ? `$${gasPriceInUsd.toFixed(3)}`
-              : "--"}
-          </p>
+          <a
+            data-tooltip-id="network-fee-tooltip"
+            data-tooltip-content={`The fee paid to the Ethereum network to process your transaction. 
+              It must be paid in ${chain.nativeCurrency.symbol}.
+            `}
+            data-tooltip-place="right"
+          >
+            <div className="flex items-center gap-1">
+              <Image
+                src={chain.nativeCurrency.logoURI}
+                width={14}
+                height={14}
+                alt=""
+              />
+              <p>
+                {gasPriceInUsd && !isNaN(gasPriceInUsd)
+                  ? `$${gasPriceInUsd.toFixed(3)}`
+                  : "--"}
+              </p>
+            </div>
+          </a>
+          <Tooltip id="network-fee-tooltip" className="!w-60 !text-xs" />
         </div>
         {/* <div className="flex justify-between items-center">
           <p className="opacity-50">Est time</p>
           <p>{"< 2mins"}</p>
         </div> */}
 
-        <div className="flex bg-[#303947] h-9 gap-[5px] p-[5px] rounded-[15px]">
-          {Object.values(GAS_OPTION_DEFAULT).map((option, i) => (
-            <Button
-              key={i}
-              className={`text-xs font-semibold rounded-[12px] !p-0 flex-1 ${
-                option.key !== selectedGasOption ? "!bg-transparent" : ""
-              }`}
-              onClick={() => setSelectedGasOption(option.key as any)}
-              variant="tertiary"
-            >
-              {option.name}
-            </Button>
-          ))}
-        </div>
+        <GasOptionButton
+          selectedGasOption={selectedGasOption}
+          setSelectedGasOption={setSelectedGasOption}
+        />
       </div>
 
       <div className="mt-auto">
+        {isNotSupported && (
+          <div className="mb-2 rounded-xl ">
+            <Message
+              message="Sending unsupported tokens may fail due to unexpected errors"
+              type="warning"
+            />
+          </div>
+        )}
         <Button
           onClick={() => onConfirmSend()}
           className="w-full"

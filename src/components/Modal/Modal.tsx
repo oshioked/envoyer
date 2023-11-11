@@ -21,12 +21,12 @@ const Modal = (props: {
   return (
     <div
       ref={containerRef}
-      className={` left-0 top-0 w-screen h-screen fixed z-10 bg-black bg-opacity-60 justify-center items-center ${
+      className={`left-0 top-0 w-screen h-screen fixed z-20 bg-black bg-opacity-60 justify-center items-center ${
         props.isOpen ? "flex" : "hidden"
       }`}
     >
       <div
-        className={`bg-[#1C2026] rounded-3xl  w-[450px] max-w-full ${props.contentClassName}`}
+        className={`bg-background-modal rounded-3xl  w-[450px] max-w-full ${props.contentClassName}`}
       >
         {props.children}
       </div>
