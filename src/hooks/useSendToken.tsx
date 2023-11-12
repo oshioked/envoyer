@@ -1,5 +1,3 @@
-import { SEND_STATUS } from "@/constants/send"
-import { usePendingSends } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { isHash, isAddress } from "viem"
 import { useAccount } from "wagmi"
@@ -8,7 +6,6 @@ import {
   prepareSendTransaction,
   prepareWriteContract,
   sendTransaction,
-  waitForTransaction,
   writeContract,
 } from "wagmi/actions"
 import useLocalStorageState from "./useLocalStorageState"
@@ -84,7 +81,6 @@ export const useSendToken = () => {
         }
 
         const config = await prepareSendTransaction(nativeSendConfig)
-        console.log({ config, nativeSendConfig })
         const { hash } = await sendTransaction(config)
         txHash = hash
       } else {
@@ -142,7 +138,6 @@ export const useSendToken = () => {
       tokenAmt,
       speedUpRate = 1.15,
     } = props
-    console.log("Calling speed send")
     if (!isHash(txHash) || !isAddress(tokenAddress)) {
       return
     }
