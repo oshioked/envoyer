@@ -22,14 +22,15 @@ import SettingsProvider from "@/contexts/SettingsProvider/SettingsProvider"
 import ERC20TokensListProvider from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
 import MoralisProvider from "@/contexts/MoralisProvider/MoralisProvider"
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
+const { chains, publicClient } = configureChains(
   [polygon, mainnet, arbitrum],
   [publicProvider()]
 )
 
 const { connectors } = getDefaultWallets({
   appName: "Envoyer",
-  projectId: "Envoyer",
+  projectId:
+    process.env.WALLETCONNECT_PROJECT_ID ?? "009df28d05dbd719a3a588c39405de12",
   chains,
 })
 
@@ -37,7 +38,6 @@ const wagmiConfig = createConfig({
   autoConnect: true,
   connectors,
   publicClient,
-  webSocketPublicClient,
 })
 
 const myTheme = merge(darkTheme(), {
