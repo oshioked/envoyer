@@ -7,6 +7,7 @@ import { isAddress } from "viem"
 import { ethers } from "ethers"
 import { useRouter } from "next/router"
 import { fetchFeeData } from "wagmi/actions"
+import { useWalletTokensBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
 
 const useGasPrice = (
   tokenAddress: string,
@@ -17,21 +18,31 @@ const useGasPrice = (
   const { address } = useAccount()
   const { chain } = useAppChain()
   const router = useRouter()
-
   const { estimateContractGas } = usePublicClient({
     chainId: chain.id,
   })
-  const {
-    isLoading: isFetchingNativeTokenPrice,
-    tokenPriceInUsd: nativeTokenPriceInUsd,
-  } = useTokenPrice(chain.nativeCurrency.address)
 
   const [estimatedGas, setEstimatedGas] = useState<string>()
   const [estimatedMaxFeePerGas, setEstimatedMaxFeePerGas] = useState<string>()
   const [gasPrice, setGasPrice] = useState<string>()
 
+  const {
+    isLoading: isFetchingNativeTokenPrice,
+    tokenPriceInUsd: nativeTokenPriceInUsd,
+  } = useTokenPrice(chain.nativeCurrency.address)
+
+  const { walletTokensBalances } = useWalletTokensBalances()
+  const tokenBalance = walletTokensBalances[tokenAddress.toLowerCase()]?.balance
+
   const getFees = useCallback(async () => {
-    if (!isAddress(tokenAddress) || !isAddress(toAddress) || !tokenAmt) return
+    if (
+      !isAddress(tokenAddress) ||
+      !isAddress(toAddress) ||
+      !tokenAmt ||
+      !tokenBalance ||
+      Number(tokenBalance) < tokenAmt
+    )
+      return
 
     const parsedTokenAmount = ethers.parseEther(tokenAmt.toString())
     try {
@@ -47,6 +58,7 @@ const useGasPrice = (
         ...tx,
         account: address as `0x${string}`,
       })
+
       //Get fees
       const {
         maxFeePerGas,
@@ -62,7 +74,14 @@ const useGasPrice = (
       setEstimatedGas("")
       console.log(error)
     }
-  }, [address, estimateContractGas, toAddress, tokenAddress, tokenAmt])
+  }, [
+    address,
+    estimateContractGas,
+    toAddress,
+    tokenAddress,
+    tokenAmt,
+    tokenBalance,
+  ])
 
   //Get fees on mount
   useEffect(() => {
