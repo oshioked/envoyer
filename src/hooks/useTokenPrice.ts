@@ -1,30 +1,11 @@
-import {
-  NATIVE_TOKEN_ADDRESS,
-  WRAPPED_NATIVE_TOKEN_ADDRESSES,
-} from "@/constants/tokens"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { useMoralisInitialized } from "@/contexts/MoralisProvider/MoralisProvider"
 import { getCachedData, setCacheData } from "@/utils/cacheUtils"
+import { fetchTokenPrice } from "@/utils/tokens"
 import Moralis from "moralis"
 import React, { useCallback, useEffect, useState } from "react"
 
 const TOKEN_PRICE_CACHE_TIME = 30 * 60000 //30mins
-
-const fetchTokenPrice = async (tokenAddress: string, chainId: number) => {
-  if (!Moralis.Core.isStarted) return
-  let fetchAddress = tokenAddress
-
-  //For some reason moralis returns an error for some native address
-  // So check for that and use Wrapped token instead
-  if (Object.values(NATIVE_TOKEN_ADDRESS).includes(tokenAddress)) {
-    fetchAddress = WRAPPED_NATIVE_TOKEN_ADDRESSES[chainId]
-  }
-  const response = await Moralis.EvmApi.token.getTokenPrice({
-    address: fetchAddress,
-    chain: chainId,
-  })
-  return response
-}
 
 export const useTokenPrice = (tokenAddress: string) => {
   const { chain } = useAppChain()

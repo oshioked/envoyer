@@ -1,6 +1,11 @@
 import { SUPPORTED_CHAIN } from "@/constants/chains"
-import { UNISWAP_TOKEN_LIST } from "@/constants/tokens"
+import {
+  NATIVE_TOKEN_ADDRESS,
+  UNISWAP_TOKEN_LIST,
+  WRAPPED_NATIVE_TOKEN_ADDRESSES,
+} from "@/constants/tokens"
 import { TokenBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
+import Moralis from "moralis"
 
 export const weiToEther = (
   weiAmount: number,
@@ -12,6 +17,24 @@ export const weiToEther = (
   const etherAmount = Number(weiAmount / divider)
 
   return etherAmount.toFixed(dp)
+}
+
+export const fetchTokenPrice = async (
+  tokenAddress: string,
+  chainId: number
+) => {
+  let fetchAddress = tokenAddress
+
+  //For some reason moralis returns an error for some native address
+  // So check for that and use Wrapped token instead
+  if (Object.values(NATIVE_TOKEN_ADDRESS).includes(tokenAddress)) {
+    fetchAddress = WRAPPED_NATIVE_TOKEN_ADDRESSES[chainId]
+  }
+  const response = await Moralis.EvmApi.token.getTokenPrice({
+    address: fetchAddress,
+    chain: chainId,
+  })
+  return response
 }
 
 export const fetchTokenListFromUrls = async () => {
