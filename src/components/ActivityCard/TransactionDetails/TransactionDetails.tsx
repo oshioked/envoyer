@@ -19,7 +19,7 @@ const TransactionDetails = (props: {
 }) => {
   const { onBack, selectedSendTxHash, populateSend } = props
   const { chain } = useAppChain()
-  const tokenList = useErc20Tokens()
+  const { tokens: tokenList } = useErc20Tokens()
 
   const { pendingSends } = usePendingSends()
   const { recentSends } = useRecentSends()

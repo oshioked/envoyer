@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import Modal from "../Modal/Modal"
 import TextInput from "../TextInput/TextInput"
 import Image from "next/image"
 import Button from "../Button/Button"
 import TextButton from "../TextButton/TextButton"
-import TokenRow from "./TokenRow/TokenRow"
+import TokenRow, { TokenRowLoading } from "./TokenRow/TokenRow"
 import { compareStringsIgnoreCase, getTokenLogoUrl } from "@/utils/utils"
 import { debounce } from "lodash"
 import { useErc20Tokens } from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
@@ -13,6 +13,8 @@ import { COMMON_TOKENS } from "@/constants/tokens"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import ToggleButton from "../ToggleButton/ToggleButton"
 import { useAccount } from "wagmi"
+import Skeleton from "react-loading-skeleton"
+import { useWalletTokensBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
 
 const TokensModal = (props: {
   isOpen: boolean
@@ -20,11 +22,13 @@ const TokensModal = (props: {
   selectedTokenAddress: string
   setSelectedToken: Function
 }) => {
-  const tokens = useErc20Tokens()
+  const { chain } = useAppChain()
   const { isConnected } = useAccount()
+
+  const { tokens, isFetchingTokens } = useErc20Tokens()
+  const { isLoading: isFetchingBalances } = useWalletTokensBalances()
   const [displayedTokenList, setDisplayedTokenList] = useState<Token[]>()
   const [inputValue, setInputValue] = useState<string>("")
-  const { chain } = useAppChain()
   const [showUnsupportedTokens, setShowUnsupportedTokens] = useState(false)
 
   const filterTokens = debounce((value) => {
@@ -104,35 +108,41 @@ const TokensModal = (props: {
           <TextInput
             value={inputValue}
             id="token-input"
-            containerClassName="!px-6 !py-4"
+            containerClassName="!px-6 !py-4 text-sm"
             placeholder="Search name, symbol or paste address"
             onChange={onInputChange}
           />
           <div className="flex flex-wrap gap-3">
-            {Object.values(COMMON_TOKENS[chain.id]).map((address) => {
-              const token = tokens[address.toLowerCase()]
-              return (
-                <Button
-                  key={address}
-                  variant="tertiary"
-                  className="flex items-center gap-2 border-[0.5px] bg-transparent border-separator-1 !py-[8px] !px-[10px]"
-                  onClick={() => onSelectToken(token)}
-                >
-                  <Image
-                    className="rounded-full"
-                    src={getTokenLogoUrl(token?.logoURI)}
-                    width={20}
-                    height={20}
-                    alt=""
-                  />
-                  <p className="text-[15px]">
-                    {tokens[address.toLowerCase()]?.symbol}
-                  </p>
-                </Button>
-              )
-            })}
+            {isFetchingTokens
+              ? [1, 2, 3, 4].map((a) => (
+                  <span key={a} className="w-[78px] h-[38px]">
+                    <Skeleton borderRadius={15} className="w-10 h-full" />
+                  </span>
+                ))
+              : Object.values(COMMON_TOKENS[chain.id]).map((address) => {
+                  const token = tokens[address.toLowerCase()]
+                  return (
+                    <Button
+                      key={address}
+                      variant="tertiary"
+                      className="flex items-center gap-2 border-[0.5px] bg-transparent border-separator-1 !py-[8px] !px-[10px]"
+                      onClick={() => onSelectToken(token)}
+                    >
+                      <Image
+                        className="rounded-full"
+                        src={getTokenLogoUrl(token?.logoURI)}
+                        width={20}
+                        height={20}
+                        alt=""
+                      />
+                      <p className="text-[15px]">
+                        {tokens[address.toLowerCase()]?.symbol}
+                      </p>
+                    </Button>
+                  )
+                })}
           </div>
-          {isConnected && (
+          {isConnected && !isFetchingBalances && (
             <div className="flex justify-end items-center gap-2 mt-3">
               <p className="text-xs opacity-50">Hidden tokens</p>
               <ToggleButton
@@ -144,7 +154,9 @@ const TokensModal = (props: {
         </div>
         {
           <div className="h-48  overflow-auto">
-            {!supportFilteredTokens?.length ? (
+            {isFetchingTokens ? (
+              [1, 2, 3, 4, 5].map((a, i) => <TokenRowLoading key={i} />)
+            ) : !supportFilteredTokens?.length ? (
               <p className="text-center pt-4">No results found</p>
             ) : (
               supportFilteredTokens.map((token, i) => (
@@ -153,6 +165,7 @@ const TokensModal = (props: {
                   name={token.name}
                   symbol={token.symbol}
                   img={token.logoURI ? getTokenLogoUrl(token.logoURI) : ""}
+                  isLoadingBalance={isFetchingBalances}
                   balance={token.balance ? token.balance : ""}
                   selected={compareStringsIgnoreCase(
                     props.selectedTokenAddress,

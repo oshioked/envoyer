@@ -31,7 +31,7 @@ const TransactionModal = (props: {
   const [isSendDetailsConfirmed, setIsSendDetailsConfirmed] =
     useLocalStorageState("isSendDetailsConfirmed", false)
 
-  const tokenList = useErc20Tokens()
+  const { tokens: tokenList } = useErc20Tokens()
   const tokenDetails = tokenList[token.address.toLowerCase()]
   const {
     logoURI,

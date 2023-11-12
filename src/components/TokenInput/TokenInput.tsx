@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler } from "react"
+import React from "react"
 import Button from "../Button/Button"
 import Image from "next/image"
 import { useErc20Tokens } from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
@@ -29,7 +29,7 @@ const TokenInput = (props: TokenInputProps) => {
 
   const { isConnected } = useAccount()
 
-  const tokens = useErc20Tokens()
+  const { tokens } = useErc20Tokens()
   const selectedTokenUpdatedBalance =
     tokens[selectedToken.address.toLowerCase()]?.balance
 

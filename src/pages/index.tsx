@@ -20,7 +20,7 @@ import useLocalStorageState from "@/hooks/useLocalStorageState"
 
 export default function Home() {
   const { chain } = useAppChain()
-  const tokens = useErc20Tokens()
+  const { tokens } = useErc20Tokens()
   const { isConnected } = useAccount()
   const defaultNativeCurrency =
     SUPPORTED_CHAIN[chain?.id || DEFAULT_CHAIN_ID].nativeCurrency

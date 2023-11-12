@@ -9,7 +9,7 @@ import { SendData } from "@/contexts/ActivityProvider/ActivityProvider"
 const TransactionsList = (props: {
   onTransactionClick: (txHash: string) => void
 }) => {
-  const tokenList = useErc20Tokens()
+  const { tokens: tokenList } = useErc20Tokens()
   const { pendingSends } = usePendingSends()
   const { recentSends, isLoading: isLoadingRecentSends } = useRecentSends()
 

@@ -4,27 +4,30 @@ import React, {
   useEffect,
   useMemo,
   createContext,
+  useState,
 } from "react"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import useLocalStorageState from "@/hooks/useLocalStorageState"
-import { SUPPORTED_CHAIN } from "@/constants/chains"
 import { useWalletTokensBalances } from "../TokensBalancesProvider/TokensBalancesProvider"
-import { UNISWAP_TOKEN_LIST, KLEROS_LIST } from "@/constants/tokens"
 import {
   combinedWalletBalancesAndTokenList,
   fetchTokenListFromUrls,
 } from "@/utils/tokens"
 
 interface Erc20TokensContextProps {
-  tokens?: { [address: string]: Token }
+  tokens: { [address: string]: Token }
+  isFetchingTokens: boolean
 }
 
-export const Erc20TokensContext = createContext<Erc20TokensContextProps>({})
+export const Erc20TokensContext = createContext<Erc20TokensContextProps>(
+  {} as Erc20TokensContextProps
+)
 
 const ERC20TokensListProvider = (props: { children: ReactNode }) => {
   const { chain } = useAppChain()
   const { walletTokensBalances, nativeBalance } = useWalletTokensBalances()
 
+  const [isFetchingTokens, setIsFetchingTokens] = useState(true)
   const [allChainsTokens, setAllChainsTokens] = useLocalStorageState<{
     [chainId: number]: { [tokenAddress: string]: Token }
   }>("allChainsTokens", {})
@@ -32,10 +35,13 @@ const ERC20TokensListProvider = (props: { children: ReactNode }) => {
   useEffect(() => {
     const getTokens = async () => {
       try {
+        setIsFetchingTokens(true)
         const tokens = await fetchTokenListFromUrls()
         setAllChainsTokens(tokens)
       } catch (error) {
         console.log(error)
+      } finally {
+        setIsFetchingTokens(false)
       }
     }
     getTokens()
@@ -58,7 +64,7 @@ const ERC20TokensListProvider = (props: { children: ReactNode }) => {
 
   return (
     <Erc20TokensContext.Provider
-      value={{ tokens: tokenListwithWalletBalances }}
+      value={{ tokens: tokenListwithWalletBalances || {}, isFetchingTokens }}
     >
       {props.children}
     </Erc20TokensContext.Provider>
@@ -66,9 +72,9 @@ const ERC20TokensListProvider = (props: { children: ReactNode }) => {
 }
 
 export const useErc20Tokens = () => {
-  const { tokens } = useContext(Erc20TokensContext)
+  const value = useContext(Erc20TokensContext)
 
-  return tokens || {}
+  return value
 }
 
 export default ERC20TokensListProvider
