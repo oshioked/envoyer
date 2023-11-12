@@ -9,11 +9,8 @@ import React, {
 } from "react"
 import Moralis from "moralis"
 import { useAccount } from "wagmi"
-import { SEND_STATUS } from "@/constants/send"
-import { compareStringsIgnoreCase } from "@/utils/utils"
 import { useAppChain } from "../../AppChainProvider/AppChainProvider"
 import { SendData } from "../ActivityProvider"
-import { SUPPORTED_CHAIN } from "@/constants/chains"
 import {
   getERC20TokensTransfers,
   getNativeTokenTransfers,

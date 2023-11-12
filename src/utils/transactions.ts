@@ -26,7 +26,6 @@ export const processPendingTransactions = async (
 
     while (!gottenResult && retryCount < MAX_RETRY_ATTEMPTS) {
       try {
-        console.log("Waiting for transaction", send.txHash) //TODO
         const data = await waitForTransaction({
           hash: send.txHash as `0x${string}`,
           confirmations: 5,
@@ -40,7 +39,6 @@ export const processPendingTransactions = async (
           onSendFailed(send)
         }
       } catch (error) {
-        console.log(`Error waiting for transaction: ${error}`) //TODO -
         // Increment retry count and wait for a specified interval before retrying
         retryCount++
         await sleep(RETRY_INTERVAL_MS)

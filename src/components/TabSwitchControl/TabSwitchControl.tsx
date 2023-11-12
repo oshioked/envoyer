@@ -15,12 +15,9 @@ export const TabSwitchControl = (props: {
   const isMobile = useIsMobile()
   const { options, selected, setSelectedOption } = props
 
-  console.log({ isMobile })
-
   //If is mobile, set first mobile only tab as selected
   useEffect(() => {
     if (isMobile) {
-      console.log("calling")
       const firstMobileOpton = options.find((option) => option.onlyOnMobile)
       setSelectedOption(firstMobileOpton?.name)
     }
@@ -30,7 +27,6 @@ export const TabSwitchControl = (props: {
   useEffect(() => {
     const selectedOption = options.find((option) => option.name === selected)
     if (selected && selectedOption?.onlyOnMobile && !isMobile) {
-      console.log("calling")
       const firstSelectableOption = options.find(
         (option) => !option.onlyOnMobile
       )
