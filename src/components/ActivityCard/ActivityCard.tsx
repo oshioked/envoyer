@@ -35,6 +35,7 @@ export const ActivityCard = (props: {
       {!isConnected ? (
         <div className="flex flex-col gap-2 items-center justify-center flex-1 w-full">
           <Image
+            loading="eager"
             src={"/icons/connectWallet.svg"}
             alt=""
             width={80}

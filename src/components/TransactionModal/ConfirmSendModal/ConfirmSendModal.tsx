@@ -43,7 +43,13 @@ const ConfirmSendModal = (props: {
           onClick={() => setIsOpen(false)}
           className="flex items-center cursor-pointer"
         >
-          <Image src="/icons/close.svg" width={28} height={28} alt="" />
+          <Image
+            loading="eager"
+            src="/icons/close.svg"
+            width={28}
+            height={28}
+            alt=""
+          />
         </div>
       </div>
 

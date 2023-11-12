@@ -91,7 +91,13 @@ const TokensModal = (props: {
         <div className="flex justify-between py-[18px] md:py-[22px] px-5 border-b border-separator-2">
           <p>Select a token</p>
           <TextButton onClick={() => props.setIsOpen(false)}>
-            <Image src={"/icons/close.svg"} width={24} height={24} alt="" />
+            <Image
+              loading="eager"
+              src={"/icons/close.svg"}
+              width={24}
+              height={24}
+              alt=""
+            />
           </TextButton>
         </div>
         <div className="px-5 flex flex-col gap-3 border-b border-separator-2 py-5">

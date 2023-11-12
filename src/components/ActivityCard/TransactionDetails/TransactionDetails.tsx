@@ -64,7 +64,13 @@ const TransactionDetails = (props: {
           onClick={() => onBack()}
           className="flex items-center cursor-pointer transition-opacity opacity-70 hover:opacity-100"
         >
-          <Image src="/icons/back.svg" width={17} height={17} alt="" />
+          <Image
+            src="/icons/back.svg"
+            loading="eager"
+            width={17}
+            height={17}
+            alt=""
+          />
           <p className="font-bold text-label-1">Activity</p>
         </div>
         <p>

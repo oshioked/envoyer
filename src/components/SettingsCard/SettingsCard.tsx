@@ -13,7 +13,13 @@ export const SettingsCard = () => {
       <div className="flex flex-col gap-3 ">
         <div className="flex items-center justify-between gap-1">
           <div className="flex items-center gap-2">
-            <Image src="/icons/gas.svg" width={20} height={20} alt="" />
+            <Image
+              src="/icons/gas.svg"
+              loading="eager"
+              width={20}
+              height={20}
+              alt=""
+            />
             <p className="opacity-60">Gas priority</p>
           </div>
         </div>

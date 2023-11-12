@@ -29,7 +29,13 @@ const ChainModal = () => {
         <div className="flex justify-between py-[20px] px-[10px] border-b border-separator-2">
           <p>Select a network</p>
           <TextButton onClick={() => setIsChainModalVisible(false)}>
-            <Image src={"/icons/close.svg"} width={24} height={24} alt="" />
+            <Image
+              loading="eager"
+              src={"/icons/close.svg"}
+              width={24}
+              height={24}
+              alt=""
+            />
           </TextButton>
         </div>
 
@@ -65,6 +71,7 @@ const ChainModal = () => {
               )}
               {chain.id === network.id && (
                 <Image
+                  loading="eager"
                   src={"/icons/accentCheckMark.svg"}
                   width={20}
                   height={20}

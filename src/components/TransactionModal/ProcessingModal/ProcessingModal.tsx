@@ -59,7 +59,13 @@ export const ProcessingModal = (props: ProcessingModalProps) => {
           onClick={() => onClose()}
           className="flex items-center cursor-pointer"
         >
-          <Image src="/icons/close.svg" width={28} height={28} alt="" />
+          <Image
+            loading="eager"
+            src="/icons/close.svg"
+            width={28}
+            height={28}
+            alt=""
+          />
         </div>
       </div>
       <div className="flex flex-col flex-1 items-center justify-center w-full gap-5">

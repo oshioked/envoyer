@@ -68,7 +68,13 @@ const TokenInput = (props: TokenInputProps) => {
             alt=""
           />
           <p className="text-[15px]">{selectedToken?.symbol}</p>
-          <Image src={"/icons/chevDown.svg"} width={13} height={13} alt="" />
+          <Image
+            loading="eager"
+            src={"/icons/chevDown.svg"}
+            width={13}
+            height={13}
+            alt=""
+          />
         </Button>
         {isConnected && (
           <div className="flex flex-col items-end">
