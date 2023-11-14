@@ -6,7 +6,6 @@ import { usePendingSends } from "@/contexts/ActivityProvider/PendingSendsProvide
 import { useRecentSends } from "@/contexts/ActivityProvider/RecentSendsProvider/RecentSendsProvider"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { useErc20Tokens } from "@/contexts/Erc20TokensListProvider/Erc20TokensListProvider"
-import useSendToken from "@/hooks/useSendToken"
 import { weiToEther } from "@/utils/tokens"
 import { formatAddress, formatIpfsImage, formatShortDate } from "@/utils/utils"
 import Image from "next/image"
@@ -23,8 +22,6 @@ const TransactionDetails = (props: {
 
   const { pendingSends } = usePendingSends()
   const { recentSends } = useRecentSends()
-
-  // const { speedUpSend } = useSendToken()
 
   const combinedSends = useMemo(() => {
     return [...pendingSends, ...recentSends]
@@ -45,17 +42,6 @@ const TransactionDetails = (props: {
       : SEND_STATUS.processing
       ? "SENDING"
       : "SEND"
-
-  // const onSpeedUpTransaction = async () => {
-  //   if (!selectedSendTxHash || !token || !selectedSendTx) return
-  //   await speedUpSend({
-  //     txHash: selectedSendTxHash,
-  //     tokenAddress: token?.address,
-  //     toAddress: selectedSendTx?.to as `0x${string}`,
-  //     tokenAmt: BigInt(selectedSendTx?.tokenAmt),
-  //     nonce: selectedSendTx.nonce,
-  //   })
-  // }
 
   return !token || !token.symbol || !selectedSendTx ? null : (
     <div className="p-5 flex flex-col gap-[15px] flex-1  text-label-2">
@@ -117,21 +103,14 @@ const TransactionDetails = (props: {
         </div>
       </div>
       <div className="mt-auto">
-        {selectedSendTx.status === SEND_STATUS.success ? (
+        {selectedSendTx.status === SEND_STATUS.success ||
+        selectedSendTx.status === SEND_STATUS.processing ? (
           <Button
             onClick={() => window.open(txExplorerLink)}
             className="w-full"
             variant="secondary"
           >
             View on explorer
-          </Button>
-        ) : selectedSendTx.status === SEND_STATUS.processing ? (
-          <Button
-            // onClick={onSpeedUpTransaction}
-            className="w-full"
-            variant="secondary"
-          >
-            Speed up transaction
           </Button>
         ) : (
           <Button

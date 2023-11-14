@@ -126,54 +126,8 @@ export const useSendToken = () => {
     }
   }
 
-  const speedUpSend = async (props: {
-    txHash: string
-    tokenAddress: string
-    toAddress: `0x${string}`
-    tokenAmt: bigint
-    speedUpRate?: number
-    nonce?: number
-  }) => {
-    const {
-      txHash,
-      tokenAddress,
-      toAddress,
-      tokenAmt,
-      speedUpRate = 1.15,
-    } = props
-    if (!isHash(txHash) || !isAddress(tokenAddress)) {
-      return
-    }
-
-    try {
-      let txNonce = props.nonce
-      if (!txNonce) {
-        //Check transaction status and get nonce
-        const { nonce: fetchedNonce } = await fetchTransaction({
-          hash: txHash,
-        })
-        txNonce = fetchedNonce
-      }
-
-      //send new transaction again with the same nonce and higher maxFeePerGas
-      await sendToken({
-        tokenAddress,
-        amount: tokenAmt,
-        toAddress,
-        nonce: txNonce,
-        // gas: BigInt(Math.ceil(Number(gas) * speedUpRate)), //TODO - Pass in the latest gas fees as prop;
-        // maxFeePerGas: BigInt(Math.ceil(Number(maxFeePerGas) * speedUpRate)),
-        onSubmitted: () => {},
-      })
-
-      // Replace transaction in pending task Array
-    } catch (error) {
-      console.log(error)
-    }
-  }
   return {
     sendToken,
-    speedUpSend,
     reset,
     isLoading,
     error,
