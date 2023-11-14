@@ -77,7 +77,7 @@ export const SendCard = (props: SendCardProps) => {
       }
     } else if (
       !selectedTokenUpdatedBalance ||
-      Number(amount) > Number(selectedTokenUpdatedBalance) * 0.97 //TODO -Put this in a variable Can't send all your tokens
+      Number(amount) > Number(selectedTokenUpdatedBalance)
     ) {
       return {
         title: `Insufficient ${selectedToken.symbol} balance`,

@@ -103,7 +103,10 @@ export const useSendToken = () => {
 
       setConfirmed(true)
     } catch (error: any) {
-      if (error.message.includes("ERC20: transfer amount exceeds balance")) {
+      if (
+        error.message.includes("ERC20: transfer amount exceeds balance") ||
+        error.message.includes("exceeds the balance")
+      ) {
         setError("Insufficient wallet balance")
       } else if (error.message.includes("User rejected the request")) {
         setError("User rejected the request")

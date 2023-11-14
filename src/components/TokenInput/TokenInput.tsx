@@ -94,7 +94,9 @@ const TokenInput = (props: TokenInputProps) => {
                 </div>
               ) : (
                 <p className="text-sm opacity-70">
-                  {selectedTokenUpdatedBalance || 0}
+                  {selectedTokenUpdatedBalance
+                    ? Number(selectedTokenUpdatedBalance).toFixed(3)
+                    : 0}
                 </p>
               )}
             </div>

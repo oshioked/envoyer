@@ -39,7 +39,9 @@ const TokenRow = (props: TokenRowProps) => {
             <Skeleton />
           </div>
         ) : (
-          <p className="opacity-50">{props.balance}</p>
+          <p className="opacity-50">
+            {props.balance ? Number(props.balance).toFixed(3) : 0}
+          </p>
         )}
         {props.selected && (
           <Image

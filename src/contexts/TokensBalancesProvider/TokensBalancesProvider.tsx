@@ -13,6 +13,7 @@ import { SUPPORTED_CHAIN } from "@/constants/chains"
 import { weiToEther } from "@/utils/tokens"
 import { fetchBalance } from "wagmi/actions"
 import { useMoralisInitialized } from "../MoralisProvider/MoralisProvider"
+import { ethers } from "ethers"
 interface TokenBalance {
   tokenAddress: string
   balance: string
@@ -64,7 +65,9 @@ const TokensBalancesProvider = (props: { children: ReactNode }) => {
 
       const nativeCurrency = SUPPORTED_CHAIN[chain.id].nativeCurrency
       const nativeBalObj: TokenBalance = {
-        balance: weiToEther(Number(nativeBal), nativeCurrency.decimals),
+        balance: ethers
+          .formatUnits(nativeBal.toString(), nativeCurrency.decimals)
+          .toString(),
         tokenAddress: nativeCurrency.address.toLowerCase(),
         decimals: nativeCurrency.decimals,
         symbol: nativeCurrency.symbol,
@@ -85,7 +88,9 @@ const TokensBalancesProvider = (props: { children: ReactNode }) => {
           const tokenAddress = value.token_address
           balances[tokenAddress.toLowerCase()] = {
             tokenAddress: tokenAddress,
-            balance: weiToEther(Number(value.balance), value.decimals),
+            balance: ethers
+              .formatUnits(value.balance, value.decimals)
+              .toString(),
             name: value.name,
             symbol: value.symbol,
             decimals: value.decimals,
