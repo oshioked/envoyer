@@ -101,7 +101,7 @@ export const ProcessingModal = (props: ProcessingModalProps) => {
             error={Boolean(error)}
           />
         </div>
-        <Button className="w-full cursor-default" variant="disabled">
+        <p className="w-full text-sm text-center text-label-2">
           {success
             ? "Sent successfully"
             : error
@@ -109,7 +109,7 @@ export const ProcessingModal = (props: ProcessingModalProps) => {
             : !confirmed
             ? "Complete in your wallet"
             : "Submitted. Processing"}
-        </Button>
+        </p>
       </div>
     </>
   )
