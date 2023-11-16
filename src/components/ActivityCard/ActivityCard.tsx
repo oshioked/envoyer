@@ -7,7 +7,7 @@ import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { SendData } from "@/contexts/ActivityProvider/ActivityProvider"
 import useLocalStorageState from "@/hooks/useLocalStorageState"
 
-export const ActivityCard = (props: {
+const ActivityCard = (props: {
   populateSendForm: (send: SendData) => void
 }) => {
   const [cardState, setCardState] = useLocalStorageState<
@@ -58,3 +58,5 @@ export const ActivityCard = (props: {
     </div>
   )
 }
+
+export default ActivityCard
