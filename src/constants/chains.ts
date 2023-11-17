@@ -1,6 +1,6 @@
 import { arbitrum, mainnet, polygon } from "viem/chains"
 
-export const DEFAULT_CHAIN_ID = arbitrum.id
+export const DEFAULT_CHAIN_ID = mainnet.id
 
 export interface AppChain {
   id: number
