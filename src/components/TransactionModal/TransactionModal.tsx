@@ -12,6 +12,7 @@ import { useSettings } from "@/contexts/SettingsProvider/SettingsProvider"
 import { usePendingSends } from "@/contexts/ActivityProvider/PendingSendsProvider/PendingSendsProvider"
 import { SEND_STATUS } from "@/constants/send"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
+import useEstTransactionTime from "@/hooks/useEstTransactionTime"
 
 const TransactionModal = (props: {
   sendDetails: {
@@ -50,6 +51,9 @@ const TransactionModal = (props: {
     toAddress,
     selectedGasPriority
   )
+
+  const { isLoading: isFetchingETA, estConfirmationTime } =
+    useEstTransactionTime()
 
   const [transactionHash, setTransactionHash] = useLocalStorageState<
     string | null
@@ -119,6 +123,8 @@ const TransactionModal = (props: {
             gasPriceInUsd={gasPriceInUsd}
             selectedGasOption={selectedGasOption}
             setSelectedGasOption={setSelectedGasOption}
+            isLoadingConfirmationTime={isFetchingETA}
+            estConfirmationTime={estConfirmationTime}
             isNotSupported={tokenNotSupported}
           />
         </div>

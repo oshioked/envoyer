@@ -140,3 +140,19 @@ export const getERC20TokensTransfers = async ({
 
   return erc20TokensResult
 }
+
+const MAX_REASONABLE_VALUE = 420 //api returns really high absurd numbers sometimes So we set this to 7 mins
+export const fetchMainnetTransactionEstimatedTime = async (
+  gasPrice: number
+) => {
+  if (!gasPrice) return
+  const response = await fetch(
+    `https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice=${gasPrice}&apikey=${process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY}`
+  )
+  const responseJson = await response.json()
+  const { status, result } = responseJson
+
+  if (Number(status) && Number(result) < MAX_REASONABLE_VALUE) {
+    return Math.ceil(Number(result) / 60) //Returns value in mins
+  }
+}

@@ -3,10 +3,13 @@ import GasOptionButton from "@/components/GasPriorityButton/GasPriorityButton"
 import Message from "@/components/MessageTag/MessageTag"
 import { GAS_OPTION_DEFAULT, GasOptionKey } from "@/constants/gas"
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
+import useEstTransactionTime from "@/hooks/useEstTransactionTime"
 import { formatAddress } from "@/utils/utils"
 import Image from "next/image"
 import React from "react"
+import Skeleton from "react-loading-skeleton"
 import { Tooltip } from "react-tooltip"
+import { mainnet } from "wagmi"
 
 const ConfirmSendModal = (props: {
   amount: number
@@ -16,6 +19,8 @@ const ConfirmSendModal = (props: {
   gasPriceInUsd: number
   selectedGasOption: GasOptionKey
   isNotSupported: boolean
+  estConfirmationTime?: number
+  isLoadingConfirmationTime?: boolean
   setSelectedGasOption: Function
   setIsOpen: (isOpen: boolean) => void
   onConfirmSend: Function
@@ -29,6 +34,8 @@ const ConfirmSendModal = (props: {
     isNotSupported,
     selectedGasOption,
     setSelectedGasOption,
+    estConfirmationTime,
+    isLoadingConfirmationTime,
     setIsOpen,
     onConfirmSend,
   } = props
@@ -112,10 +119,26 @@ const ConfirmSendModal = (props: {
           </a>
           <Tooltip id="network-fee-tooltip" className="!w-60 !text-xs" />
         </div>
-        {/* <div className="flex justify-between items-center">
-          <p className="opacity-50">Est time</p>
-          <p>{"< 2mins"}</p>
-        </div> */}
+        {chain.id === mainnet.id && (
+          <div className="flex justify-between items-center">
+            <p className="opacity-50">Est time</p>
+            {isLoadingConfirmationTime ? (
+              <div className="h-13 w-[40px]">
+                <Skeleton />
+              </div>
+            ) : (
+              <p>
+                {estConfirmationTime
+                  ? `< ${
+                      estConfirmationTime == 1
+                        ? "1 min"
+                        : estConfirmationTime + " mins"
+                    }`
+                  : "--"}
+              </p>
+            )}
+          </div>
+        )}
 
         <GasOptionButton
           selectedGasOption={selectedGasOption}
