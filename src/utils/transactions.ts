@@ -28,7 +28,7 @@ export const processPendingTransactions = async (
       try {
         const data = await waitForTransaction({
           hash: send.txHash as `0x${string}`,
-          confirmations: 5,
+          confirmations: 10,
         })
 
         if (data.status === "success") {
