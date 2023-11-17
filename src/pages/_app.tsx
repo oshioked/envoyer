@@ -8,7 +8,7 @@ import {
   darkTheme,
 } from "@rainbow-me/rainbowkit"
 import { configureChains, createConfig, WagmiConfig } from "wagmi"
-import { mainnet, polygon, arbitrum, zora } from "wagmi/chains"
+import { mainnet, polygon, arbitrum } from "wagmi/chains"
 import { publicProvider } from "wagmi/providers/public"
 import { merge } from "lodash"
 import { ToastContainer } from "react-toastify"

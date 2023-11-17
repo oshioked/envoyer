@@ -1,8 +1,6 @@
 import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
-import { isHash, isAddress } from "viem"
 import { useAccount } from "wagmi"
 import {
-  fetchTransaction,
   prepareSendTransaction,
   prepareWriteContract,
   sendTransaction,

@@ -2,7 +2,6 @@ import { useAppChain } from "@/contexts/AppChainProvider/AppChainProvider"
 import { useMoralisInitialized } from "@/contexts/MoralisProvider/MoralisProvider"
 import { getCachedData, setCacheData } from "@/utils/cacheUtils"
 import { fetchTokenPrice } from "@/utils/tokens"
-import Moralis from "moralis"
 import React, { useCallback, useEffect, useState } from "react"
 
 const TOKEN_PRICE_CACHE_TIME = 30 * 60000 //30mins
