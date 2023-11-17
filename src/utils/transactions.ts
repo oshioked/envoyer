@@ -1,4 +1,8 @@
-import { MAX_RETRY_ATTEMPTS, RETRY_INTERVAL_MS } from "@/constants/txs"
+import {
+  MAX_REASONABLE_ETA,
+  MAX_RETRY_ATTEMPTS,
+  RETRY_INTERVAL_MS,
+} from "@/constants/txs"
 import { waitForTransaction } from "wagmi/actions"
 import { compareStringsIgnoreCase, sleep } from "./utils"
 import { SendData } from "@/contexts/ActivityProvider/ActivityProvider"
@@ -141,7 +145,6 @@ export const getERC20TokensTransfers = async ({
   return erc20TokensResult
 }
 
-const MAX_REASONABLE_VALUE = 420 //api returns really high absurd numbers sometimes So we set this to 7 mins
 export const fetchMainnetTransactionEstimatedTime = async (
   gasPrice: number
 ) => {
@@ -152,7 +155,8 @@ export const fetchMainnetTransactionEstimatedTime = async (
   const responseJson = await response.json()
   const { status, result } = responseJson
 
-  if (Number(status) && Number(result) < MAX_REASONABLE_VALUE) {
+  //The etherscan api returns really high absurd numbers sometimes So we set a max
+  if (Number(status) && Number(result) < MAX_REASONABLE_ETA) {
     return Math.ceil(Number(result) / 60) //Returns value in mins
   }
 }
