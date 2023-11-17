@@ -41,7 +41,7 @@ const TokensBalancesProvider = (props: { children: ReactNode }) => {
   const { address } = useAccount()
   const { isInitialized: isMoralisInitialized } = useMoralisInitialized()
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [nativeBalance, setNativeBalance] = useState("0")
   const [walletTokensBalances, setWalletTokensBalances] =
     useState<TokenBalances>({})
