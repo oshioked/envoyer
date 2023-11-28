@@ -15,6 +15,7 @@ import ToggleButton from "../ToggleButton/ToggleButton"
 import { useAccount } from "wagmi"
 import Skeleton from "react-loading-skeleton"
 import { useWalletTokensBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
+import { FixedSizeList as List } from "react-window"
 
 const TokensModal = (props: {
   isOpen: boolean
@@ -85,9 +86,36 @@ const TokensModal = (props: {
     [displayedTokenList, showUnsupportedTokens]
   )
 
+  const Row = ({ index, style }: { index: number; style: any }) => {
+    if (!supportFilteredTokens) return
+
+    const token = supportFilteredTokens[index]
+    return (
+      <div style={style}>
+        <TokenRow
+          key={index}
+          name={token.name}
+          symbol={token.symbol}
+          img={
+            token.logoURI
+              ? getTokenLogoUrl(token.logoURI)
+              : "/icons/tokens/defaultToken.svg"
+          }
+          isLoadingBalance={isFetchingBalances}
+          balance={token.balance ? token.balance : ""}
+          selected={compareStringsIgnoreCase(
+            props.selectedTokenAddress,
+            token.address
+          )}
+          onSelectToken={() => onSelectToken(token)}
+        />
+      </div>
+    )
+  }
+
   return (
     <Modal
-      contentClassName="w-[90%] md:w-auto border border-separator-0 overflow-hidden"
+      contentClassName="w-[90%] md:w-[450px] border border-separator-0 overflow-hidden"
       isOpen={props.isOpen}
       setIsOpen={props.setIsOpen}
     >
@@ -122,23 +150,25 @@ const TokensModal = (props: {
               : Object.values(COMMON_TOKENS[chain.id]).map((address) => {
                   const token = tokens[address.toLowerCase()]
                   return (
-                    <Button
-                      key={address}
-                      variant="tertiary"
-                      className="flex items-center gap-2 border-[0.5px] bg-transparent border-separator-1 !py-[8px] !px-[10px]"
-                      onClick={() => onSelectToken(token)}
-                    >
-                      <Image
-                        className="rounded-full"
-                        src={getTokenLogoUrl(token?.logoURI)}
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <p className="text-[15px]">
-                        {tokens[address.toLowerCase()]?.symbol}
-                      </p>
-                    </Button>
+                    token && (
+                      <Button
+                        key={address}
+                        variant="tertiary"
+                        className="flex items-center gap-2 border-[0.5px] bg-transparent border-separator-1 !py-[8px] !px-[10px]"
+                        onClick={() => onSelectToken(token)}
+                      >
+                        <Image
+                          className="rounded-full"
+                          src={getTokenLogoUrl(token?.logoURI)}
+                          width={20}
+                          height={20}
+                          alt=""
+                        />
+                        <p className="text-[15px]">
+                          {tokens[address.toLowerCase()]?.symbol}
+                        </p>
+                      </Button>
+                    )
                   )
                 })}
           </div>
@@ -159,21 +189,15 @@ const TokensModal = (props: {
             ) : !supportFilteredTokens?.length ? (
               <p className="text-center pt-4">No results found</p>
             ) : (
-              supportFilteredTokens.map((token, i) => (
-                <TokenRow
-                  key={i}
-                  name={token.name}
-                  symbol={token.symbol}
-                  img={token.logoURI ? getTokenLogoUrl(token.logoURI) : ""}
-                  isLoadingBalance={isFetchingBalances}
-                  balance={token.balance ? token.balance : ""}
-                  selected={compareStringsIgnoreCase(
-                    props.selectedTokenAddress,
-                    token.address
-                  )}
-                  onSelectToken={() => onSelectToken(token)}
-                />
-              ))
+              <List
+                itemData={supportFilteredTokens}
+                height={192}
+                itemCount={supportFilteredTokens.length}
+                itemSize={58.5}
+                width={"100%"}
+              >
+                {Row}
+              </List>
             )}
           </div>
         }
