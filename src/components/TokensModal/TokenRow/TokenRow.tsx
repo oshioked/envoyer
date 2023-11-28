@@ -23,7 +23,7 @@ const TokenRow = (props: TokenRowProps) => {
       <div className="flex gap-3 items-center">
         <Image
           className="w-[32px] h-[32px] rounded-full border border-separator-1"
-          src={props.img}
+          src={props.img ?? "/icons/tokens/defaultToken.svg"}
           width={32}
           height={32}
           alt=""

@@ -4,7 +4,11 @@ export const formatIpfsImage = (url: string) =>
   url.includes("ipfs") ? url.replace("ipfs://", "https://ipfs.io/ipfs/") : url
 
 export const getTokenLogoUrl = (url: string) =>
-  url ? (url.includes("ipfs") ? formatIpfsImage(url) : url) : ""
+  url
+    ? url.includes("ipfs")
+      ? formatIpfsImage(url)
+      : url
+    : "/icons/tokens/defaultToken.svg"
 
 export const formatAddress = (address: string) =>
   `${address.slice(0, 4)}....${address.slice(
