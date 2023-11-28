@@ -40,4 +40,19 @@ export const COMMON_TOKENS: {
 //TOKENS LIST
 export const UNISWAP_TOKEN_LIST =
   "https://gateway.ipfs.io/ipns/tokens.uniswap.org"
-export const KLEROS_LIST = "https://t2crtokens.eth.link/"
+
+const COINGECKO_POLYGON_LIST =
+  "https://tokens.coingecko.com/polygon-pos/all.json"
+const COINGECKO_ARBITRUM_LIST =
+  "https://tokens.coingecko.com/arbitrum-one/all.json"
+const COINGECKO_LIST = "https://tokens.coingecko.com/uniswap/all.json"
+const ARBITRUM_LIST = "https://bridge.arbitrum.io/token-list-42161.json"
+
+export const mainTokenList = [UNISWAP_TOKEN_LIST]
+
+export const backupTokenLists = [
+  COINGECKO_LIST,
+  ARBITRUM_LIST,
+  COINGECKO_ARBITRUM_LIST,
+  COINGECKO_POLYGON_LIST,
+]

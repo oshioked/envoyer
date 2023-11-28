@@ -1,8 +1,9 @@
 import { SUPPORTED_CHAIN } from "@/constants/chains"
 import {
   NATIVE_TOKEN_ADDRESS,
-  UNISWAP_TOKEN_LIST,
   WRAPPED_NATIVE_TOKEN_ADDRESSES,
+  backupTokenLists,
+  mainTokenList,
 } from "@/constants/tokens"
 import { TokenBalances } from "@/contexts/TokensBalancesProvider/TokensBalancesProvider"
 import Moralis from "moralis"
@@ -38,14 +39,10 @@ export const fetchTokenPrice = async (
 }
 
 export const fetchTokenListFromUrls = async () => {
-  const tokenListUrls = [
-    UNISWAP_TOKEN_LIST,
-    // KLEROS_LIST
-  ]
   const allTokens = []
 
   // Fetch token lists from multiple URLs
-  for (const url of tokenListUrls) {
+  for (const url of mainTokenList) {
     try {
       const response = await fetch(url)
       const result = await response.json()
@@ -54,6 +51,22 @@ export const fetchTokenListFromUrls = async () => {
       allTokens.push(...tokenList) //Spread all result tokens in allTokens
     } catch (error) {
       console.error(`Error fetching token list from ${url}: ${error}`)
+    }
+  }
+
+  //If after fetching from main token list and allTokens is empty. Say if it returns error
+  //Fetch from backup list
+  if (!allTokens.length) {
+    for (const url of backupTokenLists) {
+      try {
+        const response = await fetch(url)
+        const result = await response.json()
+        const tokenList = result.tokens
+
+        allTokens.push(...tokenList) //Spread all result tokens in allTokens
+      } catch (error) {
+        console.error(`Error fetching token list from ${url}: ${error}`)
+      }
     }
   }
 
