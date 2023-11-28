@@ -29,7 +29,7 @@ const RecentSendsContext = createContext<RecentSendsContextProps>(
 
 const RecentSendsProvider = (props: { children: ReactNode }) => {
   const { address } = useAccount()
-  const { chain } = useAppChain()
+  const { chain, shouldPerformChainDataFetch } = useAppChain()
   const { isInitialized: isMoralisInitialized } = useMoralisInitialized()
   const [justConfirmedSends, setJustConfirmedSends] = useState<{
     [chainId: number]: SendData[]
@@ -82,8 +82,10 @@ const RecentSendsProvider = (props: { children: ReactNode }) => {
   }, [address, chain.id, isMoralisInitialized])
 
   useEffect(() => {
-    getRecentTransfers()
-  }, [getRecentTransfers])
+    if (shouldPerformChainDataFetch) {
+      getRecentTransfers()
+    }
+  }, [getRecentTransfers, shouldPerformChainDataFetch])
 
   const combineRecentSends = useMemo(() => {
     //Filter just confirmed sends in case fetched sends has a just confirmed tx already

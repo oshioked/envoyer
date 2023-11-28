@@ -37,7 +37,7 @@ const TokensBalancesContext = createContext<TokensBalancesContextProps>(
 )
 
 const TokensBalancesProvider = (props: { children: ReactNode }) => {
-  const { chain } = useAppChain()
+  const { chain, shouldPerformChainDataFetch } = useAppChain()
   const { address } = useAccount()
   const { isInitialized: isMoralisInitialized } = useMoralisInitialized()
 
@@ -118,8 +118,10 @@ const TokensBalancesProvider = (props: { children: ReactNode }) => {
   }, [address, chain, isMoralisInitialized])
 
   useEffect(() => {
-    getAllTokensInWallet()
-  }, [getAllTokensInWallet, shouldRefetch])
+    if (shouldPerformChainDataFetch) {
+      getAllTokensInWallet()
+    }
+  }, [getAllTokensInWallet, shouldPerformChainDataFetch, shouldRefetch])
 
   const refetch = useCallback(() => {
     setShouldRefetch({})

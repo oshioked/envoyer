@@ -5,6 +5,7 @@ import React, {
   createContext,
   ReactNode,
   useContext,
+  useMemo,
 } from "react"
 import { useNetwork, useSwitchNetwork } from "wagmi"
 import useLocalStorageState from "../../hooks/useLocalStorageState"
@@ -15,6 +16,7 @@ interface AppChainContextProps {
   isChainModalVisible: boolean
   pendingChainId: number | undefined
   status: "error" | "success" | "loading" | "idle"
+  shouldPerformChainDataFetch: boolean
   setIsChainModalVisible: (isVisible: boolean) => void
   switchSelectedChain: (chainId: number) => void
 }
@@ -70,6 +72,19 @@ const AppChainProvider = (props: { children: ReactNode }) => {
     }
   }, [connectedChain?.id, selectedChain.id, setSelectedChain])
 
+  const shouldPerformChainDataFetch = useMemo(() => {
+    if (
+      //if connected chain is supported but different from selected app chain, wait to switch before fetching
+      connectedChain &&
+      Boolean(SUPPORTED_CHAIN[connectedChain?.id]) &&
+      selectedChain.id !== connectedChain?.id
+    ) {
+      return false
+    } else {
+      return true
+    }
+  }, [connectedChain, selectedChain])
+
   return (
     <AppChainContext.Provider
       value={{
@@ -80,6 +95,7 @@ const AppChainProvider = (props: { children: ReactNode }) => {
         isSupportedChainConnected: connectedChain?.id
           ? Boolean(SUPPORTED_CHAIN[connectedChain?.id])
           : false,
+        shouldPerformChainDataFetch,
         switchSelectedChain,
         setIsChainModalVisible,
       }}
